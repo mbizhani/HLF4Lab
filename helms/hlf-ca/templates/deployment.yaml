@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "hlf-ca.fullname" . }}
+  labels:
+    {{- include "hlf-ca.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+
+  selector:
+    matchLabels:
+      {{- include "hlf-ca.selectorLabels" . | nindent 6 }}
+
+  template:
+    metadata:
+      labels:
+        {{- include "hlf-ca.selectorLabels" . | nindent 8 }}
+
+    spec:
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "hlf-ca.fullname" . }}
+
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: ca-port
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          env:
+            - name: FABRIC_CA_SERVER_HOME
+              value: "{{ .Values.hlfCa.config.mountBaseDir }}/{{ .Values.hlfCa.config.serverConfigDir }}"
+          volumeMounts:
+            - name: data
+              mountPath: {{ .Values.hlfCa.config.mountBaseDir }}

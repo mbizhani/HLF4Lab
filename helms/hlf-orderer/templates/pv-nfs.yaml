@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ include "hlf-orderer.fullname" . }}
+  labels:
+    type: nfs
+  {{- include "hlf-orderer.labels" . | nindent 4 }}
+
+spec:
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: {{ .Values.hlfOrd.nfs.storage }}
+  nfs:
+    path: {{ .Values.hlfOrd.nfs.path }}
+    server: {{ .Values.hlfOrd.nfs.server }}

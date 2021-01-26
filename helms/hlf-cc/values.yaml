@@ -1,0 +1,14 @@
+hlfCc:
+  id: "ID"
+  address: "HOST:PORT"
+
+replicaCount: 1
+
+image:
+  repository: IMG
+  pullPolicy: IfNotPresent
+  tag: ""
+
+service:
+  type: ClusterIP
+  port: 9999

@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "hlf-orderer.fullname" . }}
+  labels:
+    {{- include "hlf-orderer.labels" . | nindent 4 }}
+
+spec:
+  replicas: {{ .Values.replicaCount }}
+
+  selector:
+    matchLabels:
+      {{- include "hlf-orderer.selectorLabels" . | nindent 6 }}
+
+  template:
+    metadata:
+      labels:
+        {{- include "hlf-orderer.selectorLabels" . | nindent 8 }}
+
+    spec:
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "hlf-orderer.fullname" . }}
+
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: orderer-port
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: {{ include "hlf-orderer.fullname" . }}
+          volumeMounts:
+            - name: data
+              mountPath: {{ .Values.hlfOrd.config.mountBaseDir }}

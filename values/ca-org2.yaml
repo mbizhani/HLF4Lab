@@ -1,0 +1,7 @@
+hlfCa:
+  config:
+    serverConfigDir: fabric-ca/org2
+
+ingress:
+  host:
+    name: ca.org2.example.com

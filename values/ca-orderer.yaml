@@ -1,0 +1,7 @@
+hlfCa:
+  config:
+    serverConfigDir: fabric-ca/ordererOrg
+
+ingress:
+  host:
+    name: ca.example.com

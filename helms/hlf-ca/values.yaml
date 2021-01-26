@@ -1,0 +1,29 @@
+hlfCa:
+  config:
+    mountBaseDir: /hlf
+    serverConfigDir: fabric-ca/ordererOrg
+  nfs:
+    path: ""
+    server: ""
+    storage: 1Gi
+
+replicaCount: 1
+
+image:
+  repository: hyperledger/fabric-ca
+  pullPolicy: IfNotPresent
+  tag: ""
+
+service:
+  type: ClusterIP
+  port: 7054
+
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  host:
+    name: ""
+    path: /

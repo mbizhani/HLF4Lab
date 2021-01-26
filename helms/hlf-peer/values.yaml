@@ -1,0 +1,32 @@
+hlfPeer:
+  config:
+    mspId: Org1MSP
+    fqdn: peer0.org1.example.com
+    cmpDir: organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com
+    adminMspDir: organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp
+    mountBaseDir: /hlf
+  chaincode:
+    port: 7052
+  couchdb:
+    image: couchdb:3.1.1
+    pullPolicy: IfNotPresent
+    user: admin
+    pass: adminpw
+    port: 5984
+  nfs:
+    path:
+    server:
+    storage: 1Gi
+
+
+replicaCount: 1
+
+image:
+  repository: hyperledger/fabric-peer
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+service:
+  type: ClusterIP
+  port: 7051

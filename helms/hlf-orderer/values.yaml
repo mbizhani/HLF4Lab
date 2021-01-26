@@ -1,0 +1,22 @@
+hlfOrd:
+  config:
+    mspId: OrdererMSP
+    cmpDir: organizations/ordererOrganizations/example.com/orderers/orderer.example.com
+    mountBaseDir: /hlf
+  nfs:
+    path:
+    server:
+    storage: 1Gi
+
+
+replicaCount: 1
+
+image:
+  repository: hyperledger/fabric-orderer
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+service:
+  type: ClusterIP
+  port: 7050

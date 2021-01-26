@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "hlf-peer.fullname" . }}
+  labels:
+    {{- include "hlf-peer.labels" . | nindent 4 }}
+
+spec:
+  replicas: {{ .Values.replicaCount }}
+
+  selector:
+    matchLabels:
+      {{- include "hlf-peer.selectorLabels" . | nindent 6 }}
+
+  template:
+    metadata:
+      labels:
+        {{- include "hlf-peer.selectorLabels" . | nindent 8 }}
+
+    spec:
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: {{ include "hlf-peer.fullname" . }}
+      - name: builder
+        configMap:
+          name: {{ include "hlf-peer.fullname" . }}-cc-builder
+          defaultMode: 0755
+      - name: core
+        configMap:
+          name: {{ include "hlf-peer.fullname" . }}-core
+
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: peer-port
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: {{ include "hlf-peer.fullname" . }}-env
+          volumeMounts:
+            - name: data
+              mountPath: {{ .Values.hlfPeer.config.mountBaseDir }}
+            - name: builder
+              mountPath: /opt/builder/bin
+            - name: core
+              mountPath: /etc/hyperledger/fabric
+
+        - name: {{ .Chart.Name }}-couchdb
+          image: "{{ .Values.hlfPeer.couchdb.image }}"
+          imagePullPolicy: {{ .Values.hlfPeer.couchdb.pullPolicy }}
+          ports:
+            - name: couchdb-port
+              containerPort: {{ .Values.hlfPeer.couchdb.port }}
+              protocol: TCP
+          env:
+            - name: COUCHDB_USER
+              value: {{ .Values.hlfPeer.couchdb.user }}
+            - name: COUCHDB_PASSWORD
+              value: {{ .Values.hlfPeer.couchdb.pass }}

@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "hlf-orderer.fullname" . }}
+  labels:
+  {{- include "hlf-orderer.labels" . | nindent 4 }}
+data:
+  FABRIC_LOGGING_SPEC: "INFO"
+  ORDERER_GENERAL_LISTENADDRESS: "0.0.0.0"
+  ORDERER_GENERAL_LISTENPORT: {{ .Values.service.port | quote }}
+  ORDERER_GENERAL_GENESISMETHOD: "file"
+  ORDERER_GENERAL_GENESISFILE: "{{ .Values.hlfOrd.config.mountBaseDir }}/init/genesis.block"
+  ORDERER_GENERAL_BOOTSTRAPMETHOD: "file"
+  ORDERER_GENERAL_BOOTSTRAPFILE: "{{ .Values.hlfOrd.config.mountBaseDir }}/init/genesis.block"
+  ORDERER_GENERAL_LOCALMSPID: "{{ .Values.hlfOrd.config.mspId }}"
+  ORDERER_GENERAL_LOCALMSPDIR: "{{ .Values.hlfOrd.config.mountBaseDir }}/{{ .Values.hlfOrd.config.cmpDir }}/msp"
+  ORDERER_GENERAL_TLS_ENABLED: "true"
+  ORDERER_GENERAL_TLS_PRIVATEKEY: "{{ .Values.hlfOrd.config.mountBaseDir }}/{{ .Values.hlfOrd.config.cmpDir }}/tls/server.key"
+  ORDERER_GENERAL_TLS_CERTIFICATE: "{{ .Values.hlfOrd.config.mountBaseDir }}/{{ .Values.hlfOrd.config.cmpDir }}/tls/server.crt"
+  ORDERER_GENERAL_TLS_ROOTCAS: "{{ .Values.hlfOrd.config.mountBaseDir }}/{{ .Values.hlfOrd.config.cmpDir }}/tls/ca.crt"
+  ORDERER_KAFKA_TOPIC_REPLICATIONFACTOR: "1"
+  ORDERER_KAFKA_VERBOSE: "true"
+  ORDERER_GENERAL_CLUSTER_CLIENTCERTIFICATE: "{{ .Values.hlfOrd.config.mountBaseDir }}/{{ .Values.hlfOrd.config.cmpDir }}/tls/server.crt"
+  ORDERER_GENERAL_CLUSTER_CLIENTPRIVATEKEY: "{{ .Values.hlfOrd.config.mountBaseDir }}/{{ .Values.hlfOrd.config.cmpDir }}/tls/server.key"
+  ORDERER_GENERAL_CLUSTER_ROOTCAS: "{{ .Values.hlfOrd.config.mountBaseDir }}/{{ .Values.hlfOrd.config.cmpDir }}/tls/ca.crt"
+  ORDERER_FILELEDGER_LOCATION: "{{ .Values.hlfOrd.config.mountBaseDir }}/{{ .Values.hlfOrd.config.cmpDir }}/ledger"

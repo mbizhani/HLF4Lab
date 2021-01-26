@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ include "hlf-peer.fullname" . }}
+  labels:
+    type: nfs
+  {{- include "hlf-peer.labels" . | nindent 4 }}
+
+spec:
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: {{ .Values.hlfPeer.nfs.storage }}
+  nfs:
+    path: {{ .Values.hlfPeer.nfs.path }}
+    server: {{ .Values.hlfPeer.nfs.server }}

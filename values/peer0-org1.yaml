@@ -1,0 +1,6 @@
+hlfPeer:
+  config:
+    mspId: Org1MSP
+    fqdn: peer0.org1.example.com
+    cmpDir: organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com
+    adminMspDir: organizations/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp

@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "hlf-cc.fullname" . }}-env
+  labels:
+  {{- include "hlf-cc.labels" . | nindent 4 }}
+data:
+  CHAINCODE_ID: {{ .Values.hlfCc.id | quote }}
+  CHAINCODE_SERVER_ADDRESS: {{ .Values.hlfCc.address | quote}}
