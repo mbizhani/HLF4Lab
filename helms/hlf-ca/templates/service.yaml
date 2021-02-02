@@ -4,6 +4,9 @@ metadata:
   name: {{ include "hlf-ca.fullname" . }}
   labels:
     {{- include "hlf-ca.labels" . | nindent 4 }}
+  annotations:
+    keights.coredns.rewrite/domain-name: {{ .Values.ingress.host.name }}
+
 spec:
   type: {{ .Values.service.type }}
   ports:
