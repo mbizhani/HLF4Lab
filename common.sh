@@ -7,7 +7,7 @@ PEER_PORT=7051
 CA_PORT=7054
 
 ORDERER_URL=orderer.example.com:7050
-ORDERER_CA=/hlf/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
+ORDERER_CA=/hlf/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tls-ca-example-com-7054-ca-orderer.pem
 
 ##
 

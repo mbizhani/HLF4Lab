@@ -35,12 +35,24 @@ kubectl exec "${CA_ORDERER_POD}" -- bash -c "
 
 kubectl exec "${CA_ORG1_POD}" -- bash -c "
   . /hlf/fabric-ca/registerEnroll.sh
-  createOrg1
-  echo \"*** Org1 MSP Finished\"
+  createPeer0Org1
+  echo \"*** Peer0.Org1 MSP Finished\"
+"
+
+kubectl exec "${CA_ORG1_POD}" -- bash -c "
+  . /hlf/fabric-ca/registerEnroll.sh
+  createOrdererOrg1
+  echo \"*** Orderer.Org1 MSP Finished\"
 "
 
 kubectl exec "${CA_ORG2_POD}" -- bash -c "
   . /hlf/fabric-ca/registerEnroll.sh
-  createOrg2
-  echo \"*** Org2 MSP Finished\"
+  createPeer0Org2
+  echo \"*** Peer0.Org2 MSP Finished\"
+"
+
+kubectl exec "${CA_ORG2_POD}" -- bash -c "
+  . /hlf/fabric-ca/registerEnroll.sh
+  createOrdererOrg2
+  echo \"*** Orderer.Org2 MSP Finished\"
 "

@@ -58,7 +58,7 @@ createMSP() {
   export FABRIC_CA_CLIENT_HOME
   mkdir -p "${FABRIC_CA_CLIENT_HOME}"
 
-  infoln "Enrolling the CA admin"
+  infoln "Enrolling the CA admin: ${CMP_FQDN}"
   set -x
   fabric-ca-client enroll \
     -u https://admin:adminpw@"${CA_SERVER_URL}" \
@@ -81,19 +81,19 @@ createMSP() {
     Certificate: cacerts/${CA_SERVER_URL//[.:]/-}-${CA_NAME}.pem
     OrganizationalUnitIdentifier: orderer" >"${FABRIC_CA_CLIENT_HOME}"/msp/config.yaml
 
-  infoln "Registering ${CMP_NAME}"
+  infoln "Registering ${CMP_FQDN}"
   set -x
   fabric-ca-client register --caname "${CA_NAME}" --id.name "${CMP_NAME}" --id.secret "${CMP_NAME}pw" --id.type "${CMP_TYPE}" --tls.certfiles "${CA_SERVER_TLS_FILE}"
   { set +x; } 2>/dev/null
 
-  infoln "Registering the org admin"
+  infoln "Registering Org Admin: ${CMP_FQDN}"
   set -x
   fabric-ca-client register --caname "${CA_NAME}" --id.name "${ORG_ADMIN}" --id.secret "${ORG_ADMIN}pw" --id.type admin --tls.certfiles "${CA_SERVER_TLS_FILE}"
   { set +x; } 2>/dev/null
 
   mkdir -p "${CMP_HOME_DIR}"
 
-  infoln "Generating the ${CMP_NAME} msp"
+  infoln "Generating MSP: ${CMP_FQDN}"
   set -x
   fabric-ca-client enroll -u https://"${CMP_NAME}":"${CMP_NAME}pw"@"${CA_SERVER_URL}" --caname "${CA_NAME}" -M "${CMP_HOME_DIR}"/msp \
     --csr.hosts "${CMP_FQDN}" --tls.certfiles "${CA_SERVER_TLS_FILE}"
@@ -101,7 +101,7 @@ createMSP() {
 
   cp "${FABRIC_CA_CLIENT_HOME}"/msp/config.yaml "${CMP_HOME_DIR}"/msp/config.yaml
 
-  infoln "Generating the ${CMP_NAME}-tls certificates"
+  infoln "Generating TLS Certificates: ${CMP_FQDN}"
   set -x
   fabric-ca-client enroll \
     -u https://"${CMP_NAME}":"${CMP_NAME}pw"@"${CA_SERVER_URL}" \
@@ -132,7 +132,7 @@ createMSP() {
     cp "${CMP_HOME_DIR}"/tls/tlscacerts/* "${FABRIC_CA_CLIENT_HOME}"/msp/tlscacerts/  #tlsca.example.com-cert.pem
   fi
 
-  infoln "Generating the org admin msp"
+  infoln "Generating Org Admin MSP: ${CMP_FQDN}"
   mkdir -p "${FABRIC_CA_CLIENT_HOME}"/users/Admin@"${ORG_FQDN}"
   set -x
   fabric-ca-client enroll \
@@ -144,7 +144,7 @@ createMSP() {
   cp "${FABRIC_CA_CLIENT_HOME}"/msp/config.yaml "${FABRIC_CA_CLIENT_HOME}"/users/Admin@"${ORG_FQDN}"/msp/config.yaml
 }
 
-createOrg1() {
+createPeer0Org1() {
   CA_NAME="ca-org1"
   CA_SERVER_URL="ca.org1.example.com:7054"
   CA_SERVER_TLS_FILE="/hlf/fabric-ca/org1/tls-cert.pem"
@@ -157,7 +157,20 @@ createOrg1() {
   createMSP
 }
 
-createOrg2() {
+createOrdererOrg1() {
+  CA_NAME="ca-org1"
+  CA_SERVER_URL="ca.org1.example.com:7054"
+  CA_SERVER_TLS_FILE="/hlf/fabric-ca/org1/tls-cert.pem"
+
+  ORG_FQDN="org1.example.com"
+  ORG_ADMIN="org1admin"
+  CMP_TYPE="orderer"
+  CMP_NAME="orderer"
+
+  createMSP
+}
+
+createPeer0Org2() {
   CA_NAME="ca-org2"
   CA_SERVER_URL="ca.org2.example.com:7054"
   CA_SERVER_TLS_FILE="/hlf/fabric-ca/org2/tls-cert.pem"
@@ -166,6 +179,19 @@ createOrg2() {
   ORG_ADMIN="org2admin"
   CMP_TYPE="peer"
   CMP_NAME="peer0"
+
+  createMSP
+}
+
+createOrdererOrg2() {
+  CA_NAME="ca-org2"
+  CA_SERVER_URL="ca.org2.example.com:7054"
+  CA_SERVER_TLS_FILE="/hlf/fabric-ca/org2/tls-cert.pem"
+
+  ORG_FQDN="org2.example.com"
+  ORG_ADMIN="org2admin"
+  CMP_TYPE="orderer"
+  CMP_NAME="orderer"
 
   createMSP
 }

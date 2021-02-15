@@ -1,0 +1,6 @@
+hlfOrd:
+  config:
+    mspId: OrdererMSP
+    fqdn: orderer.example.com
+    cmpDir: organizations/ordererOrganizations/example.com/orderers/orderer.example.com
+
