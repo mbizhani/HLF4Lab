@@ -1,6 +1,7 @@
 hlfCc:
   id: "ID"
   address: "HOST:PORT"
+  host: ""
 
 replicaCount: 1
 

@@ -42,35 +42,18 @@ helm install peer0-org1 helms/hlf-peer \
   --set hlfPeer.nfs.path="${NFS_DIR}" \
   --set hlfPeer.nfs.server="${NFS_SERVER}"
 sleep 2
-helm install orderer-org1 helms/hlf-orderer \
-  -f values/orderer-org1.yaml \
-  --set hlfOrd.nfs.path="${NFS_DIR}" \
-  --set hlfOrd.nfs.server="${NFS_SERVER}"
-sleep 2
 helm install peer0-org2 helms/hlf-peer \
   -f values/peer0-org2.yaml \
   --set hlfPeer.nfs.path="${NFS_DIR}" \
   --set hlfPeer.nfs.server="${NFS_SERVER}"
-sleep 2
-helm install orderer-org2 helms/hlf-orderer \
-  -f values/orderer-org2.yaml \
-  --set hlfOrd.nfs.path="${NFS_DIR}" \
-  --set hlfOrd.nfs.server="${NFS_SERVER}"
-
 waitForChart "orderer"
-
 waitForChart "peer0-org1"
-waitForChart "orderer-org1"
-
 waitForChart "peer0-org2"
-waitForChart "orderer-org2"
 
-sleep 5
+PEER0_ORG1_POD="$(kubectl -n ${NAMESPACE} get pod -l app.kubernetes.io/instance=peer0-org1 -o jsonpath="{.items[0].metadata.name}")"
+PEER0_ORG2_POD="$(kubectl -n ${NAMESPACE} get pod -l app.kubernetes.io/instance=peer0-org2 -o jsonpath="{.items[0].metadata.name}")"
 
-PEER0_ORG1_POD="$(kubectl get pod -l app.kubernetes.io/instance=peer0-org1 -o jsonpath="{.items[0].metadata.name}")"
-PEER0_ORG2_POD="$(kubectl get pod -l app.kubernetes.io/instance=peer0-org2 -o jsonpath="{.items[0].metadata.name}")"
-
-kubectl exec "${PEER0_ORG1_POD}" -- sh -c "
+kubectl -n ${NAMESPACE} exec "${PEER0_ORG1_POD}" -- sh -c "
   export CORE_PEER_MSPCONFIGPATH=\${ADMIN_MSP_DIR}
 
   peer channel create \
@@ -98,7 +81,7 @@ kubectl exec "${PEER0_ORG1_POD}" -- sh -c "
 
 sleep 3
 
-kubectl exec "${PEER0_ORG2_POD}" -- sh -c "
+kubectl -n ${NAMESPACE} exec "${PEER0_ORG2_POD}" -- sh -c "
   export CORE_PEER_MSPCONFIGPATH=\${ADMIN_MSP_DIR}
 
   peer channel join -b /hlf/init/${CHANNEL_NAME}.block
@@ -117,8 +100,8 @@ kubectl exec "${PEER0_ORG2_POD}" -- sh -c "
 ##
 
 for ORG in 1 2; do
-  PEER_PEM="${NFS_DIR}/organizations/peerOrganizations/org${ORG}.example.com/tlsca/tls-ca-org${ORG}-example-com-7054-ca-org${ORG}.pem"
-    CA_PEM="${NFS_DIR}/organizations/peerOrganizations/org${ORG}.example.com/ca/ca-org${ORG}-example-com-7054-ca-org${ORG}.pem"
+  PEER_PEM="${NFS_DIR}/organizations/peerOrganizations/org${ORG}.example.com/tlsca/tlsca.org${ORG}.example.com-cert.pem"
+  CA_PEM="${NFS_DIR}/organizations/peerOrganizations/org${ORG}.example.com/ca/ca.org${ORG}.example.com-cert.pem"
   mkdir -p "${OUT_DIR}/organizations/peerOrganizations/org${ORG}.example.com"
   sudo echo "$(yaml_ccp ${ORG} "${PEER_PORT}" "${CA_PORT}" "${PEER_PEM}" "${CA_PEM}")" > \
     "${OUT_DIR}/organizations/peerOrganizations/org${ORG}.example.com/connection-org${ORG}.yaml"

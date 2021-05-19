@@ -16,27 +16,31 @@ A lab environment to deploy **Hyperledger Fabric** to **Kubernetes** with **Exte
     ``` 
   - `sudo systemctl restart nfs-server.service`
 - Install `helm` [[REF](https://helm.sh/docs/intro/install/)]
-  - Download the latest stable version (e.g. [helm-v3.4.2-linux-amd64.tar.gz](https://get.helm.sh/helm-v3.4.2-linux-amd64.tar.gz) at this time)
+  - Download the latest stable version: [Installing Helm](https://helm.sh/docs/intro/install/)
   - Unarchive it
   - Add `helm` binary in your `PATH`
   - [Optional] Add bash completion in your `~/.bashrc`
     - `echo "source <(helm completion bash)" >> ~/.bashrc`
-- Install a docker registry for pushing your external chaincode image
+- [Optional] Install a docker registry for pushing your external chaincode image
 
-## Set up components & channel 
+## Set up components & channel
+- Update `.env` due to your settings
+  - Due to `NAMESPACE` variable, `hlf4lab` is the target namespace
 - Update CoreDNS config map and add following `rewrite` records
   - `kubectl edit cm -n kube-system coredns`
+    - or `kubectl edit cm -n kube-system $(kubectl -n kube-system get cm -l k8s-app=kube-dns -o jsonpath="{.items[0].metadata.name}")`
   - Records
     ```text
-    rewrite name ca.example.com      ca-orderer-hlf-ca.default.svc.cluster.local
-    rewrite name ca.org1.example.com ca-org1-hlf-ca.default.svc.cluster.local
-    rewrite name ca.org2.example.com ca-org2-hlf-ca.default.svc.cluster.local
+    rewrite name ca.example.com      ca-orderer-hlf-ca.hlf4lab.svc.cluster.local
+    rewrite name ca.org1.example.com ca-org1-hlf-ca.hlf4lab.svc.cluster.local
+    rewrite name ca.org2.example.com ca-org2-hlf-ca.hlf4lab.svc.cluster.local
 
-    rewrite name orderer.example.com       orderer-hlf-orderer.default.svc.cluster.local
-    rewrite name peer0.org1.example.com    peer0-org1-hlf-peer.default.svc.cluster.local
-    rewrite name peer0.org2.example.com    peer0-org2-hlf-peer.default.svc.cluster.local
-    rewrite name basic-cc.org1.example.com basic-hlf-cc.default.svc.cluster.local
+    rewrite name orderer.example.com       orderer-hlf-orderer.hlf4lab.svc.cluster.local
+    rewrite name peer0.org1.example.com    peer0-org1-hlf-peer.hlf4lab.svc.cluster.local
+    rewrite name peer0.org2.example.com    peer0-org2-hlf-peer.hlf4lab.svc.cluster.local
+    rewrite name basic-cc.org1.example.com basic-hlf-cc.hlf4lab.svc.cluster.local
     ```
+   - Note: the `.hlf4lab.` in the records is the target namespace 
    - Restart its pod
      - `kubectl delete po -n kube-system $(kubectl get po -n kube-system -l k8s-app=kube-dns -o jsonpath="{.items[0].metadata.name}")`
      - Wait until its `Running` state 
@@ -46,7 +50,6 @@ A lab environment to deploy **Hyperledger Fabric** to **Kubernetes** with **Exte
   - Unarchive it
   - Copy the `bin` directory to `HLF4Lab` directory
   - Note: only `configtxgen` is required
-- Update `.env` due to your settings
 - `./start-ca-servers.sh`
 - `./start-network.sh`
 - `./start-ext-cc.sh`

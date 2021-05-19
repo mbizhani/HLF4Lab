@@ -19,7 +19,7 @@ Organizations:
   - &OrdererOrg
     # DefaultOrg defines the organization which is used in the sampleconfig
     # of the fabric.git development environment
-    Name: OrdererOrg
+    Name: OrdererMSP
 
     # ID to load the MSP definition as
     ID: OrdererMSP
@@ -71,9 +71,6 @@ Organizations:
         Type: Signature
         Rule: "OR('Org1MSP.peer')"
 
-    OrdererEndpoints:
-      - orderer.org1.example.com:7050
-
     # leave this flag set to true.
     AnchorPeers:
       # AnchorPeers defines the location of peers which can be used
@@ -108,9 +105,6 @@ Organizations:
       Endorsement:
         Type: Signature
         Rule: "OR('Org2MSP.peer')"
-
-    OrdererEndpoints:
-      - orderer.org1.example.com:7050
 
     AnchorPeers:
       # AnchorPeers defines the location of peers which can be used
@@ -231,8 +225,6 @@ Orderer: &OrdererDefaults
   # to include the OrdererEndpoints item in your org definition
   Addresses:
     - orderer.example.com:7050
-    - orderer.org1.example.com:7050
-    - orderer.org2.example.com:7050
 
   EtcdRaft:
     Consenters:
@@ -240,14 +232,6 @@ Orderer: &OrdererDefaults
         Port: 7050
         ClientTLSCert: ../organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
         ServerTLSCert: ../organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
-      - Host: orderer.org1.example.com
-        Port: 7050
-        ClientTLSCert: ../organizations/ordererOrganizations/org1.example.com/orderers/orderer.org1.example.com/tls/server.crt
-        ServerTLSCert: ../organizations/ordererOrganizations/org1.example.com/orderers/orderer.org1.example.com/tls/server.crt
-      - Host: orderer.org2.example.com
-        Port: 7050
-        ClientTLSCert: ../organizations/ordererOrganizations/org2.example.com/orderers/orderer.org2.example.com/tls/server.crt
-        ServerTLSCert: ../organizations/ordererOrganizations/org2.example.com/orderers/orderer.org2.example.com/tls/server.crt
 
   # Batch Timeout: The amount of time to wait before creating a batch
   BatchTimeout: 2s
@@ -338,8 +322,6 @@ Profiles:
       <<: *OrdererDefaults
       Organizations:
         - *OrdererOrg
-        - *Org1
-        - *Org2
       Capabilities:
         <<: *OrdererCapabilities
     Consortiums:

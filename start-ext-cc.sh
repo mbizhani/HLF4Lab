@@ -2,7 +2,7 @@
 
 function installCC() {
   PEER_POD=$1
-  kubectl exec "${PEER_POD}" -c hlf-peer -- sh -c "
+  kubectl -n ${NAMESPACE} exec "${PEER_POD}" -c hlf-peer -- sh -c "
     export CORE_PEER_MSPCONFIGPATH=\${ADMIN_MSP_DIR}
 
     peer lifecycle chaincode \
@@ -13,7 +13,7 @@ function installCC() {
 
 function approveForMyOrg() {
   PEER_POD=$1
-  kubectl exec "${PEER_POD}" -c hlf-peer -- sh -c "
+  kubectl -n ${NAMESPACE} exec "${PEER_POD}" -c hlf-peer -- sh -c "
     export CORE_PEER_MSPCONFIGPATH=\${ADMIN_MSP_DIR}
 
     peer lifecycle chaincode approveformyorg \
@@ -31,7 +31,7 @@ function approveForMyOrg() {
 
 function commitCC() {
   PEER_POD=$1
-  kubectl exec "${PEER_POD}" -c hlf-peer -- sh -c "
+  kubectl -n ${NAMESPACE} exec "${PEER_POD}" -c hlf-peer -- sh -c "
     export CORE_PEER_MSPCONFIGPATH=\${ADMIN_MSP_DIR}
 
     peer lifecycle chaincode commit \
@@ -92,7 +92,7 @@ function invokeInitCC() {
   FCN_CALL='{"function":"'${CC_INIT_FCN}'","Args":[]}'
 
   #TIP: just needs one of the peers!!!
-  kubectl exec "${PEER_POD}" -c hlf-peer -- sh -c "
+  kubectl -n ${NAMESPACE} exec "${PEER_POD}" -c hlf-peer -- sh -c "
     export CORE_PEER_MSPCONFIGPATH=\${ADMIN_MSP_DIR}
 
     peer chaincode invoke \
@@ -115,14 +115,15 @@ source common.sh
 pushd network/chaincode/asset-transfer-basic/go
 docker image prune --filter label=stage=build -f
 docker rmi "${CC_DOCKER_IMAGE}:${CC_DOCKER_TAG}" || true
+docker rmi "${CC_DOCKER_PUSH_IMAGE}:${CC_DOCKER_TAG}" || true
 docker build \
   --build-arg GOPROXY="${GOPROXY}" \
-  -t "${CC_DOCKER_IMAGE}:${CC_DOCKER_TAG}" .
+  -t "${CC_DOCKER_PUSH_IMAGE}:${CC_DOCKER_TAG}" .
 
 if [ "${REG_USER}" ]; then
   docker login -u "${REG_USER}" -p "${REG_PASS}" "${REG_URL}"
 fi
-docker push "${CC_DOCKER_IMAGE}:${CC_DOCKER_TAG}"
+docker push "${CC_DOCKER_PUSH_IMAGE}:${CC_DOCKER_TAG}"
 popd
 
 
@@ -148,13 +149,13 @@ popd
 sudo mkdir -p "${NFS_DIR}"/chaincode
 sudo cp -rf "${OUT_DIR}"/"${CC_NAME}".tar.gz "${NFS_DIR}"/chaincode
 
-PEER0_ORG1_POD="$(kubectl get pod -l app.kubernetes.io/instance=peer0-org1 -o jsonpath="{.items[0].metadata.name}")"
-PEER0_ORG2_POD="$(kubectl get pod -l app.kubernetes.io/instance=peer0-org2 -o jsonpath="{.items[0].metadata.name}")"
+PEER0_ORG1_POD="$(kubectl -n ${NAMESPACE} get pod -l app.kubernetes.io/instance=peer0-org1 -o jsonpath="{.items[0].metadata.name}")"
+PEER0_ORG2_POD="$(kubectl -n ${NAMESPACE} get pod -l app.kubernetes.io/instance=peer0-org2 -o jsonpath="{.items[0].metadata.name}")"
 
 installCC "${PEER0_ORG1_POD}"
 installCC "${PEER0_ORG2_POD}"
 
-kubectl exec "${PEER0_ORG1_POD}" -c hlf-peer -- sh -c "
+kubectl -n ${NAMESPACE} exec "${PEER0_ORG1_POD}" -c hlf-peer -- sh -c "
   export CORE_PEER_MSPCONFIGPATH=\${ADMIN_MSP_DIR}
 
   peer lifecycle chaincode queryinstalled
@@ -172,13 +173,16 @@ helm install basic helms/hlf-cc \
   --set image.tag="${CC_DOCKER_TAG}" \
   --set image.pullPolicy="Always" \
   --set hlfCc.id="${PACKAGE_ID}" \
-  --set hlfCc.address="0.0.0.0:${CC_APP_PORT}"
+  --set hlfCc.address="0.0.0.0:${CC_APP_PORT}" \
+  --set hlfCc.host="${CC_APP_HOST}"
 waitForChart "basic"
 
 approveForMyOrg "${PEER0_ORG1_POD}"
 approveForMyOrg "${PEER0_ORG2_POD}"
 
 commitCC "${PEER0_ORG1_POD}"
+
+sleep 5
 
 if [ "${CC_INIT_FCN}" ]; then
   invokeInitCC "${PEER0_ORG1_POD}"

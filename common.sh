@@ -7,14 +7,16 @@ PEER_PORT=7051
 CA_PORT=7054
 
 ORDERER_URL=orderer.example.com:7050
-ORDERER_CA=/hlf/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tls-ca-example-com-7054-ca-orderer.pem
+ORDERER_CA=/hlf/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
+
+export HELM_NAMESPACE=${NAMESPACE}
 
 ##
 
 function waitForChart() {
   CHART=$1
-  while [ "$(kubectl get pod -l app.kubernetes.io/instance="${CHART}" | wc -l )" == "0" ] ||
-        [ "$(kubectl get pod -l app.kubernetes.io/instance="${CHART}" -o jsonpath="{.items[0].status.phase}")" != "Running" ]; do
+  while [ "$(kubectl -n ${NAMESPACE} get pod -l app.kubernetes.io/instance="${CHART}" | wc -l )" == "0" ] ||
+        [ "$(kubectl -n ${NAMESPACE} get pod -l app.kubernetes.io/instance="${CHART}" -o jsonpath="{.items[0].status.phase}")" != "Running" ]; do
     echo "Waiting for ${CHART} ..."
     sleep 2
   done
@@ -22,7 +24,7 @@ function waitForChart() {
 
 function waitForNoChart() {
   CHART=$1
-  while [ "$(kubectl get pod -l app.kubernetes.io/instance="${CHART}" | wc -l )" == "2" ]; do
+  while [ "$(kubectl -n ${NAMESPACE} get pod -l app.kubernetes.io/instance="${CHART}" | wc -l )" == "2" ]; do
     echo "Waiting for no ${CHART} ..."
     sleep 3
   done
