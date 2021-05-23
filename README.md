@@ -16,16 +16,17 @@ A lab environment to deploy **Hyperledger Fabric** to **Kubernetes** with **Exte
     ``` 
   - `sudo systemctl restart nfs-server.service`
 - Install `helm` [[REF](https://helm.sh/docs/intro/install/)]
-  - Download the latest stable version: [Installing Helm](https://helm.sh/docs/intro/install/)
+  - Download the latest stable version
   - Unarchive it
   - Add `helm` binary in your `PATH`
   - [Optional] Add bash completion in your `~/.bashrc`
     - `echo "source <(helm completion bash)" >> ~/.bashrc`
-- [Optional] Install a docker registry for pushing your external chaincode image
+- [Optional] Install a docker registry for pushing your external chaincode image [[REF](https://docs.docker.com/registry/)]
 
-## Set up components & channel
+## Setup Network
 - Update `.env` due to your settings
-  - Due to `NAMESPACE` variable, `hlf4lab` is the target namespace
+  - Based on `NAMESPACE` variable, `hlf4lab` is the target namespace
+- Update helm chart values files in `values` directory if necessary
 - Update CoreDNS config map and add following `rewrite` records
   - `kubectl edit cm -n kube-system coredns`
     - or `kubectl edit cm -n kube-system $(kubectl -n kube-system get cm -l k8s-app=kube-dns -o jsonpath="{.items[0].metadata.name}")`
@@ -53,3 +54,21 @@ A lab environment to deploy **Hyperledger Fabric** to **Kubernetes** with **Exte
 - `./start-ca-servers.sh`
 - `./start-network.sh`
 - `./start-ext-cc.sh`
+  - This step compiles the Go chain code, and it uses `https://proxy.golang.org` as Go proxy, defined in `.env`. 
+    If you have trouble accessing this site, you can set other proxy such as `https://goproxy.io`.
+
+Now, if everything executed successfully, you should see the logs of the chain code like following text:
+```text
+2021/05/23 06:00:47 Config: CHAINCODE_ID=[basic_1.0:2aeb3613f13edba4fb0805dcbd4e31982b8a4b2f7487f9bb214d3eca4ccc4819] CHAINCODE_SERVER_ADDRESS=[0.0.0.0:9999]
+2021/05/23 06:00:47 Server Created Successfully!
+2021/05/23 06:01:01 InitLedger()
+2021/05/23 06:01:01 InitLedger: Asset Added [asset1]
+2021/05/23 06:01:01 InitLedger: Asset Added [asset2]
+2021/05/23 06:01:01 InitLedger: Asset Added [asset3]
+2021/05/23 06:01:01 InitLedger: Asset Added [asset4]
+2021/05/23 06:01:01 InitLedger: Asset Added [asset5]
+2021/05/23 06:01:01 InitLedger: Asset Added [asset6]
+```
+
+## Uninstall the Network
+Execute `stop-all.sh` to uninstall all charts and remove all the generated files from your local and NFS.

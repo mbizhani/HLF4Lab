@@ -186,4 +186,9 @@ sleep 5
 
 if [ "${CC_INIT_FCN}" ]; then
   invokeInitCC "${PEER0_ORG1_POD}"
+  sleep 2
+  echo "----------------"
+  echo " Chaincode Logs"
+  echo "----------------"
+  kubectl -n ${NAMESPACE} logs -l app.kubernetes.io/instance=basic
 fi
