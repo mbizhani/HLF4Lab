@@ -13,10 +13,12 @@ waitForNoChart "ca-orderer"
 waitForNoChart "ca-org1"
 waitForNoChart "ca-org2"
 
+helm uninstall explorer || true
 helm uninstall orderer || true
 helm uninstall peer0-org1 || true
 helm uninstall peer0-org2 || true
 helm uninstall basic || true
+waitForNoChart "explorer"
 waitForNoChart "orderer"
 waitForNoChart "peer0-org1"
 waitForNoChart "peer0-org2"

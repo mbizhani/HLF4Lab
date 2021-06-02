@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ include "hl-explorer.fullname" . }}
+  labels:
+    type: nfs
+  {{- include "hl-explorer.labels" . | nindent 4 }}
+
+spec:
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: {{ .Values.hlExplorer.nfs.storage }}
+  nfs:
+    path: {{ .Values.hlExplorer.nfs.path }}
+    server: {{ .Values.hlExplorer.nfs.server }}

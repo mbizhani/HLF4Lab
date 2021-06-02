@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "hl-explorer.fullname" . }}
+  labels:
+  {{- include "hl-explorer.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      type: nfs
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  resources:
+    requests:
+      storage: {{ .Values.hlExplorer.nfs.storage }}
