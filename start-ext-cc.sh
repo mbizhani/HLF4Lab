@@ -11,6 +11,8 @@ function installCC() {
    "
 }
 
+# TIP: if `--init-required` is set for `approveformyorg` & `commit`, then `--isInit` is required for `invoke`
+
 function approveForMyOrg() {
   PEER_POD=$1
   kubectl -n ${NAMESPACE} exec "${PEER_POD}" -c hlf-peer -- sh -c "
@@ -23,7 +25,7 @@ function approveForMyOrg() {
       --name ${CC_NAME} \
       --version ${CC_VERSION} \
       --package-id ${PACKAGE_ID} \
-      --sequence ${CC_SEQUENCE} ${CC_INIT_REQUIRED}
+      --sequence ${CC_SEQUENCE}
 
     echo \"Approve for My Org: \$?\"
     "
@@ -44,7 +46,7 @@ function commitCC() {
       --tlsRootCertFiles /hlf/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt \
       --peerAddresses peer0.org2.example.com:7051 \
       --tlsRootCertFiles /hlf/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt \
-      --sequence ${CC_SEQUENCE} ${CC_INIT_REQUIRED}
+      --sequence ${CC_SEQUENCE}
 
     echo \"Commit CC: \$?\"
   "
@@ -102,7 +104,7 @@ function invokeInitCC() {
       --name ${CC_NAME} \
       --peerAddresses peer0.org1.example.com:7051 \
       --tlsRootCertFiles /hlf/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt \
-      --isInit -c '${FCN_CALL}'
+      -c '${FCN_CALL}'
 
     echo \"Invoke Init CC: \$?\"
   "
