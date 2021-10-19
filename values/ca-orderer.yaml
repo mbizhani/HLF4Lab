@@ -3,5 +3,9 @@ hlfCa:
     serverConfigDir: fabric-ca/ordererOrg
 
 ingress:
-  host:
-    name: ca.example.com
+  enabled: true
+  hosts:
+    - host: ca.example.com
+      paths:
+        - path: /
+          pathType: ImplementationSpecific

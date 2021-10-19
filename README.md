@@ -52,6 +52,9 @@ A lab environment to deploy **Hyperledger Fabric** to **Kubernetes** with **Exte
   - Copy the `bin` directory to `HLF4Lab` directory
   - Note: only `configtxgen` is required
 - `./start-ca-servers.sh`
+  - `wget -qO - --no-check-certificate https://ca.example.com/cainfo`
+  - `wget -qO - --no-check-certificate https://ca.org1.example.com/cainfo`
+  - `wget -qO - --no-check-certificate https://ca.org2.example.com/cainfo`
 - `./start-network.sh`
 - `./start-ext-cc.sh`
   - This step compiles the Go chain code, and it uses `https://proxy.golang.org` as Go proxy, defined in `.env`. 

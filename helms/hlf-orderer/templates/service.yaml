@@ -4,14 +4,14 @@ metadata:
   name: {{ include "hlf-orderer.fullname" . }}
   labels:
     {{- include "hlf-orderer.labels" . | nindent 4 }}
-  annotations:
-    keights.coredns.rewrite/domain-name: {{ .Values.hlfOrd.config.fqdn }}
-
 spec:
   type: {{ .Values.service.type }}
   ports:
     - port: {{ .Values.service.port }}
       targetPort: {{ .Values.service.port }}
+      {{- if eq .Values.service.type "NodePort" }}
+      nodePort: {{ .Values.service.port }}
+      {{- end }}
       protocol: TCP
       name: orderer-port
   selector:

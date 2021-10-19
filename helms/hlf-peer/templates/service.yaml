@@ -4,14 +4,14 @@ metadata:
   name: {{ include "hlf-peer.fullname" . }}
   labels:
     {{- include "hlf-peer.labels" . | nindent 4 }}
-  annotations:
-    keights.coredns.rewrite/domain-name: {{ .Values.hlfPeer.config.fqdn }}
-
 spec:
   type: {{ .Values.service.type }}
   ports:
     - port: {{ .Values.service.port }}
       targetPort: {{ .Values.service.port }}
+      {{- if eq .Values.service.type "NodePort" }}
+      nodePort: {{ .Values.service.port }}
+      {{- end }}
       protocol: TCP
       name: peer-port
   selector:

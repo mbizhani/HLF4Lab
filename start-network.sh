@@ -53,7 +53,7 @@ waitForChart "peer0-org2"
 PEER0_ORG1_POD="$(kubectl -n ${NAMESPACE} get pod -l app.kubernetes.io/instance=peer0-org1 -o jsonpath="{.items[0].metadata.name}")"
 PEER0_ORG2_POD="$(kubectl -n ${NAMESPACE} get pod -l app.kubernetes.io/instance=peer0-org2 -o jsonpath="{.items[0].metadata.name}")"
 
-kubectl -n ${NAMESPACE} exec "${PEER0_ORG1_POD}" -- sh -c "
+kubectl -n ${NAMESPACE} exec "${PEER0_ORG1_POD}" -c "${PEER_CTR}"  -- sh -c "
   export CORE_PEER_MSPCONFIGPATH=\${ADMIN_MSP_DIR}
 
   peer channel create \
@@ -81,7 +81,7 @@ kubectl -n ${NAMESPACE} exec "${PEER0_ORG1_POD}" -- sh -c "
 
 sleep 3
 
-kubectl -n ${NAMESPACE} exec "${PEER0_ORG2_POD}" -- sh -c "
+kubectl -n ${NAMESPACE} exec "${PEER0_ORG2_POD}" -c "${PEER_CTR}" -- sh -c "
   export CORE_PEER_MSPCONFIGPATH=\${ADMIN_MSP_DIR}
 
   peer channel join -b /hlf/init/${CHANNEL_NAME}.block
@@ -103,8 +103,14 @@ for ORG in 1 2; do
   PEER_PEM="${NFS_DIR}/organizations/peerOrganizations/org${ORG}.example.com/tlsca/tlsca.org${ORG}.example.com-cert.pem"
   CA_PEM="${NFS_DIR}/organizations/peerOrganizations/org${ORG}.example.com/ca/ca.org${ORG}.example.com-cert.pem"
   mkdir -p "${OUT_DIR}/organizations/peerOrganizations/org${ORG}.example.com"
-  sudo echo "$(yaml_ccp ${ORG} "${PEER_PORT}" "${CA_PORT}" "${PEER_PEM}" "${CA_PEM}")" > \
+  sudo echo "$(yaml_ccp ${ORG} "$( [ $ORG == "1" ] && echo ${PEER_ORG1_PORT} || echo ${PEER_ORG2_PORT})" "${CA_PORT}" "${PEER_PEM}" "${CA_PEM}")" > \
     "${OUT_DIR}/organizations/peerOrganizations/org${ORG}.example.com/connection-org${ORG}.yaml"
 done
 
 sudo cp -rf "${OUT_DIR}"/organizations "${NFS_DIR}"
+
+## copy CA's pem for application to create 'wallet'
+mkdir -p "${OUT_DIR}/ca"
+for ORG in 1 2; do
+  cp ${NFS_DIR}/organizations/peerOrganizations/org${ORG}.example.com/ca/*.pem ${OUT_DIR}/ca
+done

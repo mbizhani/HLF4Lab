@@ -6,18 +6,32 @@ metadata:
     {{- include "hlf-peer.labels" . | nindent 4 }}
 
 spec:
+{{- /*  {{- if not .Values.autoscaling.enabled }}*/}}
   replicas: {{ .Values.replicaCount }}
-
+{{- /*  {{- end }}*/}}
   selector:
     matchLabels:
       {{- include "hlf-peer.selectorLabels" . | nindent 6 }}
 
   template:
     metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       labels:
         {{- include "hlf-peer.selectorLabels" . | nindent 8 }}
 
     spec:
+{{- /*
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "hlf-peer.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+*/}}
       volumes:
       - name: data
         persistentVolumeClaim:
@@ -31,24 +45,6 @@ spec:
           name: {{ include "hlf-peer.fullname" . }}-core
 
       containers:
-        - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          ports:
-            - name: peer-port
-              containerPort: {{ .Values.service.port }}
-              protocol: TCP
-          envFrom:
-            - configMapRef:
-                name: {{ include "hlf-peer.fullname" . }}-env
-          volumeMounts:
-            - name: data
-              mountPath: {{ .Values.hlfPeer.config.mountBaseDir }}
-            - name: builder
-              mountPath: /opt/builder/bin
-            - name: core
-              mountPath: /etc/hyperledger/fabric
-
         - name: {{ .Chart.Name }}-couchdb
           image: "{{ .Values.hlfPeer.couchdb.image }}"
           imagePullPolicy: {{ .Values.hlfPeer.couchdb.pullPolicy }}
@@ -61,3 +57,50 @@ spec:
               value: {{ .Values.hlfPeer.couchdb.user }}
             - name: COUCHDB_PASSWORD
               value: {{ .Values.hlfPeer.couchdb.pass }}
+
+        - name: {{ .Chart.Name }}
+{{- /*
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+*/}}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: peer-port
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+{{- /*
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+*/}}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "hlf-peer.fullname" . }}-env
+          volumeMounts:
+            - name: data
+              mountPath: {{ .Values.hlfPeer.config.mountBaseDir }}
+            - name: builder
+              mountPath: /opt/builder/bin
+            - name: core
+              mountPath: /etc/hyperledger/fabric
+
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -4,3 +4,7 @@ hlfPeer:
     fqdn: peer0.org2.example.com
     cmpDir: organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com
     adminMspDir: organizations/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp
+
+service:
+  type: NodePort
+  port: 30102

@@ -5,18 +5,32 @@ metadata:
   labels:
     {{- include "hlf-ca.labels" . | nindent 4 }}
 spec:
+{{- /*  {{- if not .Values.autoscaling.enabled }}*/}}
   replicas: {{ .Values.replicaCount }}
-
+{{- /*  {{- end }}*/}}
   selector:
     matchLabels:
       {{- include "hlf-ca.selectorLabels" . | nindent 6 }}
 
   template:
     metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       labels:
         {{- include "hlf-ca.selectorLabels" . | nindent 8 }}
 
     spec:
+{{- /*
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "hlf-ca.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+*/}}
       volumes:
         - name: data
           persistentVolumeClaim:
@@ -24,15 +38,43 @@ spec:
 
       containers:
         - name: {{ .Chart.Name }}
+{{- /*
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+*/}}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: ca-port
               containerPort: {{ .Values.service.port }}
               protocol: TCP
+{{- /*
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+*/}}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
           env:
             - name: FABRIC_CA_SERVER_HOME
               value: "{{ .Values.hlfCa.config.mountBaseDir }}/{{ .Values.hlfCa.config.serverConfigDir }}"
           volumeMounts:
             - name: data
               mountPath: {{ .Values.hlfCa.config.mountBaseDir }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

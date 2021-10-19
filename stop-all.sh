@@ -3,15 +3,8 @@
 source .env
 source common.sh
 
-rm -rf "${OUT_DIR}"
+rm -rf "${OUT_DIR}" wallet crawl.log log.txt
 sudo rm -rf "${NFS_DIR}"/*
-
-helm uninstall ca-orderer || true
-helm uninstall ca-org1 || true
-helm uninstall ca-org2 || true
-waitForNoChart "ca-orderer"
-waitForNoChart "ca-org1"
-waitForNoChart "ca-org2"
 
 helm uninstall explorer || true
 helm uninstall orderer || true
@@ -23,5 +16,12 @@ waitForNoChart "orderer"
 waitForNoChart "peer0-org1"
 waitForNoChart "peer0-org2"
 waitForNoChart "basic"
+
+helm uninstall ca-orderer || true
+helm uninstall ca-org1 || true
+helm uninstall ca-org2 || true
+waitForNoChart "ca-orderer"
+waitForNoChart "ca-org1"
+waitForNoChart "ca-org2"
 
 echo "*** FINISHED"

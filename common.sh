@@ -3,10 +3,13 @@
 OUT_DIR="OUT"
 mkdir -p ${OUT_DIR}
 
-PEER_PORT=7051
+PEER_CTR="hlf-peer"
+ORDERER_PORT=30100
+PEER_ORG1_PORT=30101
+PEER_ORG2_PORT=30102
 CA_PORT=7054
 
-ORDERER_URL=orderer.example.com:7050
+ORDERER_URL="orderer.example.com:${ORDERER_PORT}"
 ORDERER_CA=/hlf/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
 
 export HELM_NAMESPACE=${NAMESPACE}

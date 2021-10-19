@@ -2,7 +2,7 @@
 
 function installCC() {
   PEER_POD=$1
-  kubectl -n ${NAMESPACE} exec "${PEER_POD}" -c hlf-peer -- sh -c "
+  kubectl -n ${NAMESPACE} exec "${PEER_POD}" -c "${PEER_CTR}" -- sh -c "
     export CORE_PEER_MSPCONFIGPATH=\${ADMIN_MSP_DIR}
 
     peer lifecycle chaincode \
@@ -15,7 +15,7 @@ function installCC() {
 
 function approveForMyOrg() {
   PEER_POD=$1
-  kubectl -n ${NAMESPACE} exec "${PEER_POD}" -c hlf-peer -- sh -c "
+  kubectl -n ${NAMESPACE} exec "${PEER_POD}" -c "${PEER_CTR}" -- sh -c "
     export CORE_PEER_MSPCONFIGPATH=\${ADMIN_MSP_DIR}
 
     peer lifecycle chaincode approveformyorg \
@@ -33,7 +33,7 @@ function approveForMyOrg() {
 
 function commitCC() {
   PEER_POD=$1
-  kubectl -n ${NAMESPACE} exec "${PEER_POD}" -c hlf-peer -- sh -c "
+  kubectl -n ${NAMESPACE} exec "${PEER_POD}" -c "${PEER_CTR}" -- sh -c "
     export CORE_PEER_MSPCONFIGPATH=\${ADMIN_MSP_DIR}
 
     peer lifecycle chaincode commit \
@@ -42,9 +42,9 @@ function commitCC() {
       --channelID ${CHANNEL_NAME} \
       --name ${CC_NAME} \
       --version ${CC_VERSION} \
-      --peerAddresses peer0.org1.example.com:7051 \
+      --peerAddresses peer0.org1.example.com:${PEER_ORG1_PORT} \
       --tlsRootCertFiles /hlf/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt \
-      --peerAddresses peer0.org2.example.com:7051 \
+      --peerAddresses peer0.org2.example.com:${PEER_ORG2_PORT} \
       --tlsRootCertFiles /hlf/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt \
       --sequence ${CC_SEQUENCE}
 
@@ -56,7 +56,7 @@ function commitCC() {
 #  PEER_POD="$1"
 #  PARAM1="$2"
 #
-#  kubectl exec "${PEER_POD}" -c hlf-peer -- sh -c "
+#  kubectl exec "${PEER_POD}" -c "${PEER_CTR}" -- sh -c "
 #    export CORE_PEER_MSPCONFIGPATH=\${ADMIN_MSP_DIR}
 #
 #    CNT=0
@@ -78,7 +78,7 @@ function commitCC() {
 
 #function queryCommitted() {
 #  PEER_POD="$1"
-#  kubectl exec "${PEER_POD}" -c hlf-peer -- sh -c "
+#  kubectl exec "${PEER_POD}" -c "${PEER_CTR}" -- sh -c "
 #    export CORE_PEER_MSPCONFIGPATH=\${ADMIN_MSP_DIR}
 #
 #    peer lifecycle chaincode querycommitted \
@@ -94,7 +94,7 @@ function invokeInitCC() {
   FCN_CALL='{"function":"'${CC_INIT_FCN}'","Args":[]}'
 
   #TIP: just needs one of the peers!!!
-  kubectl -n ${NAMESPACE} exec "${PEER_POD}" -c hlf-peer -- sh -c "
+  kubectl -n ${NAMESPACE} exec "${PEER_POD}" -c "${PEER_CTR}" -- sh -c "
     export CORE_PEER_MSPCONFIGPATH=\${ADMIN_MSP_DIR}
 
     peer chaincode invoke \
@@ -102,7 +102,7 @@ function invokeInitCC() {
       --tls --cafile ${ORDERER_CA} \
       --channelID ${CHANNEL_NAME} \
       --name ${CC_NAME} \
-      --peerAddresses peer0.org1.example.com:7051 \
+      --peerAddresses peer0.org1.example.com:${PEER_ORG1_PORT} \
       --tlsRootCertFiles /hlf/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt \
       -c '${FCN_CALL}'
 
@@ -157,7 +157,7 @@ PEER0_ORG2_POD="$(kubectl -n ${NAMESPACE} get pod -l app.kubernetes.io/instance=
 installCC "${PEER0_ORG1_POD}"
 installCC "${PEER0_ORG2_POD}"
 
-kubectl -n ${NAMESPACE} exec "${PEER0_ORG1_POD}" -c hlf-peer -- sh -c "
+kubectl -n ${NAMESPACE} exec "${PEER0_ORG1_POD}" -c "${PEER_CTR}" -- sh -c "
   export CORE_PEER_MSPCONFIGPATH=\${ADMIN_MSP_DIR}
 
   peer lifecycle chaincode queryinstalled

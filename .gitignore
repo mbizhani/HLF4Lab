@@ -2,5 +2,8 @@
 bin/
 config/
 OUT/
+wallet/
 
 log.txt
+*.log
+*.iml
