@@ -67,11 +67,11 @@ function commitCC() {
 #        --channelID ${CHANNEL_NAME} \
 #        --name ${CC_NAME} \
 #        --version ${CC_VERSION} \
-#        --sequence ${CC_SEQUENCE} ${CC_INIT_REQUIRED} --output json >&log.txt
+#        --sequence ${CC_SEQUENCE} ${CC_INIT_REQUIRED} --output json >&chaincode.log
 #
-#      cat log.txt
+#      cat chaincode.log
 #      sleep 2
-#      CNT=\$(grep '${PARAM1}' log.txt -c)
+#      CNT=\$(grep '${PARAM1}' chaincode.log -c)
 #    done
 #  "
 #}
@@ -93,7 +93,6 @@ function invokeInitCC() {
   PEER_POD="$1"
   FCN_CALL='{"function":"'${CC_INIT_FCN}'","Args":[]}'
 
-  #TIP: just needs one of the peers!!!
   kubectl -n ${NAMESPACE} exec "${PEER_POD}" -c "${PEER_CTR}" -- sh -c "
     export CORE_PEER_MSPCONFIGPATH=\${ADMIN_MSP_DIR}
 
@@ -104,29 +103,36 @@ function invokeInitCC() {
       --name ${CC_NAME} \
       --peerAddresses peer0.org1.example.com:${PEER_ORG1_PORT} \
       --tlsRootCertFiles /hlf/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt \
+      --peerAddresses peer0.org2.example.com:${PEER_ORG2_PORT} \
+      --tlsRootCertFiles /hlf/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt \
       -c '${FCN_CALL}'
 
     echo \"Invoke Init CC: \$?\"
   "
 }
+
 ##############################
 
 source .env
 source common.sh
 
-pushd network/chaincode/asset-transfer-basic/go
-docker image prune --filter label=stage=build -f
-docker rmi "${CC_DOCKER_IMAGE}:${CC_DOCKER_TAG}" || true
-docker rmi "${CC_DOCKER_PUSH_IMAGE}:${CC_DOCKER_TAG}" || true
-docker build \
-  --build-arg GOPROXY="${GOPROXY}" \
-  -t "${CC_DOCKER_PUSH_IMAGE}:${CC_DOCKER_TAG}" .
+if [ "$1" != "-nb" ]; then
+  pushd network/chaincode/asset-transfer-basic/go
+  docker image prune --filter label=stage=build -f
+  docker rmi "${CC_DOCKER_IMAGE}:${CC_DOCKER_TAG}" || true
+  docker rmi "${CC_DOCKER_PUSH_IMAGE}:${CC_DOCKER_TAG}" || true
+  docker build \
+    --build-arg GOPROXY="${GOPROXY}" \
+    -t "${CC_DOCKER_PUSH_IMAGE}:${CC_DOCKER_TAG}" .
 
-if [ "${REG_USER}" ]; then
-  docker login -u "${REG_USER}" -p "${REG_PASS}" "${REG_URL}"
+  if [ "${REG_USER}" ]; then
+    docker login -u "${REG_USER}" -p "${REG_PASS}" "${REG_URL}"
+  fi
+  docker push "${CC_DOCKER_PUSH_IMAGE}:${CC_DOCKER_TAG}"
+  popd
+else
+  echo "No Build for Chaincode, Use Current Image!"
 fi
-docker push "${CC_DOCKER_PUSH_IMAGE}:${CC_DOCKER_TAG}"
-popd
 
 
 cat > "${OUT_DIR}"/connection.json << EOF
@@ -161,9 +167,9 @@ kubectl -n ${NAMESPACE} exec "${PEER0_ORG1_POD}" -c "${PEER_CTR}" -- sh -c "
   export CORE_PEER_MSPCONFIGPATH=\${ADMIN_MSP_DIR}
 
   peer lifecycle chaincode queryinstalled
-" >&log.txt
-cat log.txt
-PACKAGE_ID=$(sed -n "/${CC_NAME}_${CC_VERSION}/{s/^Package ID: //; s/, Label:.*$//; p;}" log.txt)
+" >&chaincode.log
+cat chaincode.log
+PACKAGE_ID=$(sed -n "/${CC_NAME}_${CC_VERSION}/{s/^Package ID: //; s/, Label:.*$//; p;}" chaincode.log)
 echo "PACKAGE_ID = ${PACKAGE_ID}"
 if [ ! "${PACKAGE_ID}" ]; then
   echo "ERROR: no PACKAGE_ID"

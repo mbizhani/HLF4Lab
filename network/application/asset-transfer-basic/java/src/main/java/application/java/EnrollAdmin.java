@@ -15,7 +15,6 @@ import org.hyperledger.fabric.sdk.security.CryptoSuiteFactory;
 import org.hyperledger.fabric_ca.sdk.EnrollmentRequest;
 import org.hyperledger.fabric_ca.sdk.HFCAClient;
 
-import java.io.File;
 import java.nio.file.Paths;
 import java.util.Properties;
 
@@ -32,13 +31,12 @@ public class EnrollAdmin {
 		return caClient;
 	}
 
-
-	public static void main(String[] args) throws Exception {
+	public static void enroll(String walletPath) throws Exception {
 		// Create a CA client for interacting with the CA.
 		final HFCAClient caClient = createClient();
 
 		// Create a wallet for managing identities
-		Wallet wallet = Wallets.newFileSystemWallet(Paths.get("wallet"));
+		Wallet wallet = Wallets.newFileSystemWallet(Paths.get(walletPath));
 
 		// Check to see if we've already enrolled the admin user.
 		if (wallet.get("admin") != null) {
@@ -54,5 +52,9 @@ public class EnrollAdmin {
 		Identity user = Identities.newX509Identity("Org1MSP", enrollment);
 		wallet.put("admin", user);
 		System.out.println("Successfully enrolled user \"admin\" and imported it into the wallet");
+	}
+
+	public static void main(String[] args) throws Exception {
+		enroll("wallet");
 	}
 }

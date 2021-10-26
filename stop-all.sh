@@ -3,7 +3,7 @@
 source .env
 source common.sh
 
-rm -rf "${OUT_DIR}" wallet crawl.log log.txt
+rm -rf "${OUT_DIR}" *.log
 sudo rm -rf "${NFS_DIR}"/*
 
 helm uninstall explorer || true

@@ -50,7 +50,7 @@ data:
           "tlsCACerts": {
             "path": "/hlf/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt"
           },
-          "url": "grpcs://peer0.org1.example.com:7051"
+          "url": "grpcs://peer0.org1.example.com:{{ .Values.hlExplorer.peer_org1.port }}"
         }
       }
     }

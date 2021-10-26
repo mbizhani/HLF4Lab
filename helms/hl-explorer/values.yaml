@@ -1,6 +1,8 @@
 hlExplorer:
   config:
     mountBaseDir: /hlf
+  peer_org1:
+    port: 7051
   db:
     host: postgres.local
     dbName: db_hl_explorer

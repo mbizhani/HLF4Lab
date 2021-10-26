@@ -9,35 +9,35 @@
 
 package application.java;
 
+import org.hyperledger.fabric.gateway.*;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import org.hyperledger.fabric.gateway.Contract;
-import org.hyperledger.fabric.gateway.Gateway;
-import org.hyperledger.fabric.gateway.Network;
-import org.hyperledger.fabric.gateway.Wallet;
-import org.hyperledger.fabric.gateway.Wallets;
 
 
 public class App {
+	public static final String WALLET_PATH = "OUT/wallet";
+	public static final String USER = "appUser";
+	public static final String PASS = "appUserPw";
 
 	// helper function for getting connected to the gateway
-	public static Gateway connect() throws Exception{
+	public static Gateway connect() throws Exception {
 		// Load a file system based wallet for managing identities.
-		Path walletPath = Paths.get("wallet");
-		Wallet wallet = Wallets.newFileSystemWallet(walletPath);
+		final Path walletPath = Paths.get(WALLET_PATH);
+		final Wallet wallet = Wallets.newFileSystemWallet(walletPath);
 		// load a CCP
-		Path networkConfigPath = Paths.get("OUT", "organizations", "peerOrganizations", "org1.example.com", "connection-org1.yaml");
+		final Path networkConfigPath = Paths.get("OUT/organizations/peerOrganizations/org1.example.com/connection-org1.yaml");
 
-		Gateway.Builder builder = Gateway.createBuilder();
-		builder.identity(wallet, "appUser").networkConfig(networkConfigPath).discovery(true);
+		final Gateway.Builder builder = Gateway.createBuilder();
+		builder.identity(wallet, USER).networkConfig(networkConfigPath).discovery(true);
 		return builder.connect();
 	}
 
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) {
 		// enrolls the admin and registers the user
 		try {
-			EnrollAdmin.main(null);
-			RegisterUser.main(null);
+			EnrollAdmin.enroll(WALLET_PATH);
+			RegisterUser.register(USER, PASS, WALLET_PATH);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -58,10 +58,10 @@ public class App {
 			result = contract.evaluateTransaction("GetAllAssets");
 			System.out.println("Evaluate Transaction: GetAllAssets, result: " + new String(result));
 
-//			System.out.println("\n");
-//			System.out.println("Submit Transaction: CreateAsset asset13");
-//			CreateAsset creates an asset with ID asset13, color yellow, owner Tom, size 5 and appraisedValue of 1300
-//			contract.submitTransaction("CreateAsset", "asset13", "yellow", "5", "Tom", "1300");
+			System.out.println("\n");
+			System.out.println("Submit Transaction: CreateAsset asset13");
+			// CreateAsset creates an asset with ID asset13, color yellow, owner Tom, size 5 and appraisedValue of 1300
+			contract.submitTransaction("CreateAsset", "asset13", "yellow", "5", "Tom", "1300");
 
 			System.out.println("\n");
 			System.out.println("Evaluate Transaction: ReadAsset asset13");
@@ -103,8 +103,7 @@ public class App {
 			System.out.println("Evaluate Transaction: ReadAsset asset1");
 			result = contract.evaluateTransaction("ReadAsset", "asset1");
 			System.out.println("result: " + new String(result));
-		}
-		catch(Exception e){
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
