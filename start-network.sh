@@ -6,7 +6,10 @@ source common.sh
 INIT_DIR=${NFS_DIR}/init
 sudo mkdir -p "${INIT_DIR}"
 
-sudo cp -rf network/configtx "${NFS_DIR}"
+sudo mkdir -p "${NFS_DIR}"/configtx
+eval "cat <<EOF
+$(<network/configtx/configtx.yaml)
+EOF" | sudo tee "${NFS_DIR}"/configtx/configtx.yaml
 
 sudo bin/configtxgen \
   -configPath "${NFS_DIR}"/configtx \
@@ -34,16 +37,22 @@ done
 
 helm install orderer helms/hlf-orderer \
   -f values/orderer.yaml \
+  --set service.type="${SERVICE_TYPE}" \
+  --set service.port="${ORDERER_PORT}" \
   --set hlfOrd.nfs.path="${NFS_DIR}" \
   --set hlfOrd.nfs.server="${NFS_SERVER}"
 sleep 2
 helm install peer0-org1 helms/hlf-peer \
   -f values/peer0-org1.yaml \
+  --set service.type="${SERVICE_TYPE}" \
+  --set service.port="${PEER_ORG1_PORT}" \
   --set hlfPeer.nfs.path="${NFS_DIR}" \
   --set hlfPeer.nfs.server="${NFS_SERVER}"
 sleep 2
 helm install peer0-org2 helms/hlf-peer \
   -f values/peer0-org2.yaml \
+  --set service.type="${SERVICE_TYPE}" \
+  --set service.port="${PEER_ORG2_PORT}" \
   --set hlfPeer.nfs.path="${NFS_DIR}" \
   --set hlfPeer.nfs.server="${NFS_SERVER}"
 waitForChart "orderer"
@@ -98,19 +107,20 @@ kubectl -n ${NAMESPACE} exec "${PEER0_ORG2_POD}" -c "${PEER_CTR}" -- sh -c "
   "
 
 ##
+## $( [ $ORG == "1" ] && echo ${PEER_ORG1_PORT} || echo ${PEER_ORG2_PORT})
 
-for ORG in 1 2; do
-  PEER_PEM="${NFS_DIR}/organizations/peerOrganizations/org${ORG}.example.com/tlsca/tlsca.org${ORG}.example.com-cert.pem"
-  CA_PEM="${NFS_DIR}/organizations/peerOrganizations/org${ORG}.example.com/ca/ca.org${ORG}.example.com-cert.pem"
-  mkdir -p "${OUT_DIR}/organizations/peerOrganizations/org${ORG}.example.com"
-  sudo echo "$(yaml_ccp ${ORG} "$( [ $ORG == "1" ] && echo ${PEER_ORG1_PORT} || echo ${PEER_ORG2_PORT})" "${CA_PORT}" "${PEER_PEM}" "${CA_PEM}")" > \
-    "${OUT_DIR}/organizations/peerOrganizations/org${ORG}.example.com/connection-org${ORG}.yaml"
+for org in 1 2; do
+  PEER_PEM="${NFS_DIR}/organizations/peerOrganizations/org${org}.example.com/tlsca/tlsca.org${org}.example.com-cert.pem"
+  CA_PEM="${NFS_DIR}/organizations/peerOrganizations/org${org}.example.com/ca/ca.org${org}.example.com-cert.pem"
+  mkdir -p "${OUT_DIR}/organizations/peerOrganizations/org${org}.example.com"
+  sudo echo "$(yaml_ccp ${org} "${ORGS_PEER_PORT[$org]}" "${ORGS_CA_PORT[$org]}" "${PEER_PEM}" "${CA_PEM}")" > \
+    "${OUT_DIR}/organizations/peerOrganizations/org${org}.example.com/connection-org${org}.yaml"
 done
 
 sudo cp -rf "${OUT_DIR}"/organizations "${NFS_DIR}"
 
 ## copy CA's pem for application to create 'wallet'
 mkdir -p "${OUT_DIR}/ca"
-for ORG in 1 2; do
-  cp ${NFS_DIR}/organizations/peerOrganizations/org${ORG}.example.com/ca/*.pem ${OUT_DIR}/ca
+for org in 1 2; do
+  cp ${NFS_DIR}/organizations/peerOrganizations/org${org}.example.com/ca/*.pem ${OUT_DIR}/ca
 done

@@ -41,10 +41,11 @@ fatalln() {
 ##############################
 
 createOrg1() {
-  infoln "Enrolling the CA admin"
+  ca_port="${1:-7054}"
+  infoln "Enrolling the CA admin: port=${ca_port}"
 
   CA_NAME="ca-org1"
-  CA_SERVER_URL="ca.org1.example.com:7054"
+  CA_SERVER_URL="ca.org1.example.com:${ca_port}"
   CA_SERVER_TLS_FILE="/hlf/fabric-ca/org1/tls-cert.pem"
   export FABRIC_CA_CLIENT_HOME="/hlf/organizations/peerOrganizations/org1.example.com"
   mkdir -p ${FABRIC_CA_CLIENT_HOME}
@@ -53,20 +54,20 @@ createOrg1() {
   fabric-ca-client enroll -u https://admin:adminpw@${CA_SERVER_URL} --caname ${CA_NAME} --tls.certfiles ${CA_SERVER_TLS_FILE}
   { set +x; } 2>/dev/null
 
-  echo 'NodeOUs:
+  echo "NodeOUs:
   Enable: true
   ClientOUIdentifier:
-    Certificate: cacerts/ca-org1-example-com-7054-ca-org1.pem
+    Certificate: cacerts/ca-org1-example-com-${ca_port}-ca-org1.pem
     OrganizationalUnitIdentifier: client
   PeerOUIdentifier:
-    Certificate: cacerts/ca-org1-example-com-7054-ca-org1.pem
+    Certificate: cacerts/ca-org1-example-com-${ca_port}-ca-org1.pem
     OrganizationalUnitIdentifier: peer
   AdminOUIdentifier:
-    Certificate: cacerts/ca-org1-example-com-7054-ca-org1.pem
+    Certificate: cacerts/ca-org1-example-com-${ca_port}-ca-org1.pem
     OrganizationalUnitIdentifier: admin
   OrdererOUIdentifier:
-    Certificate: cacerts/ca-org1-example-com-7054-ca-org1.pem
-    OrganizationalUnitIdentifier: orderer' >${FABRIC_CA_CLIENT_HOME}/msp/config.yaml
+    Certificate: cacerts/ca-org1-example-com-${ca_port}-ca-org1.pem
+    OrganizationalUnitIdentifier: orderer" >${FABRIC_CA_CLIENT_HOME}/msp/config.yaml
 
   infoln "Registering peer0"
   set -x
@@ -132,10 +133,11 @@ createOrg1() {
 }
 
 createOrg2() {
-  infoln "Enrolling the CA admin"
+  ca_port="${1:-7054}"
+  infoln "Enrolling the CA admin: port=${ca_port}"
 
   CA_NAME="ca-org2"
-  CA_SERVER_URL="ca.org2.example.com:7054"
+  CA_SERVER_URL="ca.org2.example.com:${ca_port}"
   CA_SERVER_TLS_FILE="/hlf/fabric-ca/org2/tls-cert.pem"
   export FABRIC_CA_CLIENT_HOME="/hlf/organizations/peerOrganizations/org2.example.com"
   mkdir -p ${FABRIC_CA_CLIENT_HOME}
@@ -144,20 +146,20 @@ createOrg2() {
   fabric-ca-client enroll -u https://admin:adminpw@${CA_SERVER_URL} --caname ${CA_NAME} --tls.certfiles ${CA_SERVER_TLS_FILE}
   { set +x; } 2>/dev/null
 
-  echo 'NodeOUs:
+  echo "NodeOUs:
   Enable: true
   ClientOUIdentifier:
-    Certificate: cacerts/ca-org2-example-com-7054-ca-org2.pem
+    Certificate: cacerts/ca-org2-example-com-${ca_port}-ca-org2.pem
     OrganizationalUnitIdentifier: client
   PeerOUIdentifier:
-    Certificate: cacerts/ca-org2-example-com-7054-ca-org2.pem
+    Certificate: cacerts/ca-org2-example-com-${ca_port}-ca-org2.pem
     OrganizationalUnitIdentifier: peer
   AdminOUIdentifier:
-    Certificate: cacerts/ca-org2-example-com-7054-ca-org2.pem
+    Certificate: cacerts/ca-org2-example-com-${ca_port}-ca-org2.pem
     OrganizationalUnitIdentifier: admin
   OrdererOUIdentifier:
-    Certificate: cacerts/ca-org2-example-com-7054-ca-org2.pem
-    OrganizationalUnitIdentifier: orderer' >${FABRIC_CA_CLIENT_HOME}/msp/config.yaml
+    Certificate: cacerts/ca-org2-example-com-${ca_port}-ca-org2.pem
+    OrganizationalUnitIdentifier: orderer" >${FABRIC_CA_CLIENT_HOME}/msp/config.yaml
 
   infoln "Registering peer0"
   set -x
@@ -222,10 +224,11 @@ createOrg2() {
 }
 
 createOrderer() {
-  infoln "Enrolling the CA admin"
+  ca_port="${1:-7054}"
+  infoln "Enrolling the CA admin: port=${ca_port}"
 
   CA_NAME="ca-orderer"
-  CA_SERVER_URL="ca.example.com:7054"
+  CA_SERVER_URL="ca.example.com:${ca_port}"
   CA_SERVER_TLS_FILE="/hlf/fabric-ca/ordererOrg/tls-cert.pem"
   export FABRIC_CA_CLIENT_HOME="/hlf/organizations/ordererOrganizations/example.com"
   mkdir -p ${FABRIC_CA_CLIENT_HOME}
@@ -234,20 +237,20 @@ createOrderer() {
   fabric-ca-client enroll -u https://admin:adminpw@${CA_SERVER_URL} --caname ${CA_NAME} --tls.certfiles "${CA_SERVER_TLS_FILE}"
   { set +x; } 2>/dev/null
 
-  echo 'NodeOUs:
+  echo "NodeOUs:
   Enable: true
   ClientOUIdentifier:
-    Certificate: cacerts/ca-example-com-7054-ca-orderer.pem
+    Certificate: cacerts/ca-example-com-${ca_port}-ca-orderer.pem
     OrganizationalUnitIdentifier: client
   PeerOUIdentifier:
-    Certificate: cacerts/ca-example-com-7054-ca-orderer.pem
+    Certificate: cacerts/ca-example-com-${ca_port}-ca-orderer.pem
     OrganizationalUnitIdentifier: peer
   AdminOUIdentifier:
-    Certificate: cacerts/ca-example-com-7054-ca-orderer.pem
+    Certificate: cacerts/ca-example-com-${ca_port}-ca-orderer.pem
     OrganizationalUnitIdentifier: admin
   OrdererOUIdentifier:
-    Certificate: cacerts/ca-example-com-7054-ca-orderer.pem
-    OrganizationalUnitIdentifier: orderer' >"${FABRIC_CA_CLIENT_HOME}"/msp/config.yaml
+    Certificate: cacerts/ca-example-com-${ca_port}-ca-orderer.pem
+    OrganizationalUnitIdentifier: orderer" >"${FABRIC_CA_CLIENT_HOME}"/msp/config.yaml
 
   infoln "Registering orderer"
   set -x

@@ -63,6 +63,8 @@ spec:
           env:
             - name: FABRIC_CA_SERVER_HOME
               value: "{{ .Values.hlfCa.config.mountBaseDir }}/{{ .Values.hlfCa.config.serverConfigDir }}"
+            - name: FABRIC_CA_SERVER_PORT
+              value: "{{ .Values.service.port }}"
           volumeMounts:
             - name: data
               mountPath: {{ .Values.hlfCa.config.mountBaseDir }}

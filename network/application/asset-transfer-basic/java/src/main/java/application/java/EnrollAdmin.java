@@ -25,7 +25,7 @@ public class EnrollAdmin {
 		props.put("pemFile", "OUT/ca/ca.org1.example.com-cert.pem");
 		props.put("allowAllHostNames", "true");
 
-		final HFCAClient caClient = HFCAClient.createNewInstance("http://ca.org1.example.com", props);
+		final HFCAClient caClient = HFCAClient.createNewInstance("https://ca.org1.example.com:30101", props);
 		caClient.setCryptoSuite(CryptoSuiteFactory.getDefault().getCryptoSuite());
 
 		return caClient;

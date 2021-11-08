@@ -42,7 +42,7 @@ Organizations:
         Rule: "OR('OrdererMSP.admin')"
 
     OrdererEndpoints:
-      - orderer.example.com:30100
+      - orderer.example.com:${ORDERER_PORT}
 
   - &Org1
     # DefaultOrg defines the organization which is used in the sampleconfig
@@ -77,7 +77,7 @@ Organizations:
       # for cross org gossip communication.  Note, this value is only
       # encoded in the genesis block in the Application section context
       - Host: peer0.org1.example.com
-        Port: 30101
+        Port: ${PEER_ORG1_PORT}
 
   - &Org2
     # DefaultOrg defines the organization which is used in the sampleconfig
@@ -111,7 +111,7 @@ Organizations:
       # for cross org gossip communication.  Note, this value is only
       # encoded in the genesis block in the Application section context
       - Host: peer0.org2.example.com
-        Port: 30102
+        Port: ${PEER_ORG2_PORT}
 
 ################################################################################
 #
@@ -224,12 +224,12 @@ Orderer: &OrdererDefaults
   # as TLS validation.  The preferred way to specify orderer addresses is now
   # to include the OrdererEndpoints item in your org definition
   Addresses:
-    - orderer.example.com:30100
+    - orderer.example.com:${ORDERER_PORT}
 
   EtcdRaft:
     Consenters:
       - Host: orderer.example.com
-        Port: 30100
+        Port: ${ORDERER_PORT}
         ClientTLSCert: ../organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
         ServerTLSCert: ../organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/server.crt
 

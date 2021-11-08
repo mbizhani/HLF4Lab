@@ -4,10 +4,17 @@ OUT_DIR="OUT"
 mkdir -p ${OUT_DIR}
 
 PEER_CTR="hlf-peer"
-ORDERER_PORT=30100
-PEER_ORG1_PORT=30101
-PEER_ORG2_PORT=30102
-CA_PORT=7054
+SERVICE_TYPE="NodePort"
+CA_ORD_PORT=30100
+CA_ORG1_PORT=30101
+CA_ORG2_PORT=30102
+ORDERER_PORT=30103
+PEER_ORG1_PORT=30104
+PEER_ORG2_PORT=30105
+
+declare -A ORGS_CA_PORT=( ["1"]="${CA_ORG1_PORT}" ["2"]="${CA_ORG2_PORT}")
+declare -A ORGS_PEER_PORT=( ["1"]="${PEER_ORG1_PORT}" ["2"]="${PEER_ORG2_PORT}")
+
 
 ORDERER_URL="orderer.example.com:${ORDERER_PORT}"
 ORDERER_CA=/hlf/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
