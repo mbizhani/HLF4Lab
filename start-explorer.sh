@@ -15,5 +15,6 @@ helm install explorer helms/hl-explorer \
   -f values/explorer.yaml \
   --set hlExplorer.nfs.path="${NFS_DIR}" \
   --set hlExplorer.nfs.server="${NFS_SERVER}" \
-  --set hlExplorer.db.host="${EXPLORER_PGS_HOST}"
+  --set hlExplorer.db.host="${EXPLORER_PGS_HOST}" \
+  --set hlExplorer.peer_org1.port="${PEER_ORG1_PORT}"
 
