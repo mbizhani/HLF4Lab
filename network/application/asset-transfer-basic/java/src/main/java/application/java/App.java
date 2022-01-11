@@ -17,32 +17,26 @@ import java.nio.file.Paths;
 
 public class App {
 	public static final String WALLET_PATH = "OUT/wallet";
-	public static final String USER = "appUser";
-	public static final String PASS = "appUserPw";
+	public static final String USER = "backend";
+	public static final String PASS = "backendPw";
 
 	// helper function for getting connected to the gateway
 	public static Gateway connect() throws Exception {
-		// Load a file system based wallet for managing identities.
-		final Path walletPath = Paths.get(WALLET_PATH);
-		final Wallet wallet = Wallets.newFileSystemWallet(walletPath);
-		// load a CCP
+		// Load an in-memory wallet for managing identities.
+		final Wallet wallet = EnrollAdmin.enroll(WALLET_PATH, USER, PASS);
+
+		// Load a CCP
 		final Path networkConfigPath = Paths.get("OUT/organizations/peerOrganizations/org1.example.com/connection-org1.yaml");
 
 		final Gateway.Builder builder = Gateway.createBuilder();
-		builder.identity(wallet, USER).networkConfig(networkConfigPath).discovery(true);
+		builder
+			.identity(wallet, USER)
+			.networkConfig(networkConfigPath);
 		return builder.connect();
 	}
 
 	public static void main(String[] args) {
-		// enrolls the admin and registers the user
-		try {
-			EnrollAdmin.enroll(WALLET_PATH);
-			RegisterUser.register(USER, PASS, WALLET_PATH);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		// connect to the network and invoke the smart contract
+		// Connect to the network and invoke the smart contract
 		try (Gateway gateway = connect()) {
 
 			// get the network and contract
@@ -58,16 +52,20 @@ public class App {
 			result = contract.evaluateTransaction("GetAllAssets");
 			System.out.println("Evaluate Transaction: GetAllAssets, result: " + new String(result));
 
-			System.out.println("\n");
-			System.out.println("Submit Transaction: CreateAsset asset13");
-			// CreateAsset creates an asset with ID asset13, color yellow, owner Tom, size 5 and appraisedValue of 1300
-			contract.submitTransaction("CreateAsset", "asset13", "yellow", "5", "Tom", "1300");
+			try {
+				System.out.println("\n");
+				System.out.println("Submit Transaction: CreateAsset asset13");
+				// CreateAsset creates an asset with ID asset13, color yellow, owner Tom, size 5 and appraisedValue of 1300
+				contract.submitTransaction("CreateAsset", "asset13", "yellow", "5", "Tom", "1300");
+			} catch (ContractException e) {
+				System.out.println("ERROR: " + e.getMessage());
+			}
 
 			System.out.println("\n");
 			System.out.println("Evaluate Transaction: ReadAsset asset13");
 			// ReadAsset returns an asset with given assetID
 			result = contract.evaluateTransaction("ReadAsset", "asset13");
-			System.out.println("result: " + new String(result));
+			System.out.println("Result: " + new String(result));
 
 			System.out.println("\n");
 			System.out.println("Evaluate Transaction: AssetExists asset1");
@@ -90,8 +88,8 @@ public class App {
 				System.out.println("Submit Transaction: UpdateAsset asset70");
 				//Non existing asset asset70 should throw Error
 				contract.submitTransaction("UpdateAsset", "asset70", "blue", "5", "Tomoko", "300");
-			} catch (Exception e) {
-				System.err.println("Expected an error on UpdateAsset of non-existing Asset: " + e);
+			} catch (ContractException e) {
+				System.out.println("ERROR: Expected an error on UpdateAsset of non-existing Asset: " + e);
 			}
 
 			System.out.println("\n");

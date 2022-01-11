@@ -31,30 +31,31 @@ public class EnrollAdmin {
 		return caClient;
 	}
 
-	public static void enroll(String walletPath) throws Exception {
+	public static Wallet enroll(String walletPath, String username, String password) throws Exception {
 		// Create a CA client for interacting with the CA.
 		final HFCAClient caClient = createClient();
 
 		// Create a wallet for managing identities
-		Wallet wallet = Wallets.newFileSystemWallet(Paths.get(walletPath));
+		final Wallet wallet = Wallets.newFileSystemWallet(Paths.get(walletPath));
 
 		// Check to see if we've already enrolled the admin user.
-		if (wallet.get("admin") != null) {
-			System.out.println("An identity for the admin user \"admin\" already exists in the wallet");
-			return;
+		if (wallet.get(username) != null) {
+			System.out.printf("An identity for the user '%s' already exists in the wallet\n", username);
+			return wallet;
 		}
 
 		// Enroll the admin user, and import the new identity into the wallet.
 		final EnrollmentRequest enrollmentRequestTLS = new EnrollmentRequest();
 		enrollmentRequestTLS.addHost("localhost");
 		enrollmentRequestTLS.setProfile("tls");
-		Enrollment enrollment = caClient.enroll("admin", "adminpw", enrollmentRequestTLS);
+		Enrollment enrollment = caClient.enroll(username, password, enrollmentRequestTLS);
 		Identity user = Identities.newX509Identity("Org1MSP", enrollment);
-		wallet.put("admin", user);
-		System.out.println("Successfully enrolled user \"admin\" and imported it into the wallet");
+		wallet.put(username, user);
+		System.out.printf("Successfully enrolled user '%s' and imported it into the wallet\n", username);
+		return wallet;
 	}
 
 	public static void main(String[] args) throws Exception {
-		enroll("wallet");
+		enroll("wallet", "admin", "adminpw");
 	}
 }

@@ -37,6 +37,17 @@ fatalln() {
   exit 1
 }
 
+waitForFile() {
+  FILE=$1
+
+  while [ ! -f ${FILE} ]; do
+    warnln "Waiting for file: ${FILE}"
+    sleep 2
+  done
+
+  infoln "File Existed: ${FILE}"
+}
+
 ##############################
 ##############################
 
@@ -49,6 +60,8 @@ createOrg1() {
   CA_SERVER_TLS_FILE="/hlf/fabric-ca/org1/tls-cert.pem"
   export FABRIC_CA_CLIENT_HOME="/hlf/organizations/peerOrganizations/org1.example.com"
   mkdir -p ${FABRIC_CA_CLIENT_HOME}
+
+  waitForFile "${CA_SERVER_TLS_FILE}"
 
   set -x
   fabric-ca-client enroll -u https://admin:adminpw@${CA_SERVER_URL} --caname ${CA_NAME} --tls.certfiles ${CA_SERVER_TLS_FILE}
@@ -142,6 +155,8 @@ createOrg2() {
   export FABRIC_CA_CLIENT_HOME="/hlf/organizations/peerOrganizations/org2.example.com"
   mkdir -p ${FABRIC_CA_CLIENT_HOME}
 
+  waitForFile "${CA_SERVER_TLS_FILE}"
+
   set -x
   fabric-ca-client enroll -u https://admin:adminpw@${CA_SERVER_URL} --caname ${CA_NAME} --tls.certfiles ${CA_SERVER_TLS_FILE}
   { set +x; } 2>/dev/null
@@ -232,6 +247,8 @@ createOrderer() {
   CA_SERVER_TLS_FILE="/hlf/fabric-ca/ordererOrg/tls-cert.pem"
   export FABRIC_CA_CLIENT_HOME="/hlf/organizations/ordererOrganizations/example.com"
   mkdir -p ${FABRIC_CA_CLIENT_HOME}
+
+  waitForFile "${CA_SERVER_TLS_FILE}"
 
   set -x
   fabric-ca-client enroll -u https://admin:adminpw@${CA_SERVER_URL} --caname ${CA_NAME} --tls.certfiles "${CA_SERVER_TLS_FILE}"

@@ -135,6 +135,10 @@ registry:
         hf.GenCRL: true
         hf.Registrar.Attributes: "*"
         hf.AffiliationMgr: true
+    - name: backend
+      pass: backendpw
+      type: client
+      affiliation: ""
 
 #############################################################################
 #  Database section
