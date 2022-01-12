@@ -14,7 +14,7 @@ import (
 	"github.com/hyperledger/fabric-contract-api-go/contractapi"
 )
 
-type serverConfig struct {
+type ServerConfig struct {
 	CCID    string
 	Address string
 }
@@ -212,7 +212,7 @@ func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface
 
 func main() {
 	// See chaincode.env.example
-	config := serverConfig{
+	config := ServerConfig{
 		CCID:    os.Getenv("CHAINCODE_ID"),
 		Address: os.Getenv("CHAINCODE_SERVER_ADDRESS"),
 	}
