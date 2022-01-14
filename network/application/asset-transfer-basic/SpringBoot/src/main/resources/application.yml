@@ -1,0 +1,12 @@
+thallo:
+  hlf:
+    chaincode: basic
+    channel: mychannel
+    connection-profile-file: OUT/organizations/peerOrganizations/org1.example.com/connection-org1.yaml
+    identity-wallet-dir: OUT/wallet
+    org-msp-id: Org1MSP
+    ca-server:
+      pem-file: OUT/ca/ca.org1.example.com-cert.pem
+      url: https://ca.org1.example.com:30101
+      username: backend
+      password: backendPw

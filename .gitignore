@@ -2,6 +2,7 @@
 bin/
 config/
 OUT/
+target/
 
 *.log
 *.iml
