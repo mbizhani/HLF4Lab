@@ -17,9 +17,26 @@ public class AssetTransferService {
 
 	@PostConstruct
 	public void init() {
+		final String id = "MyAsset001";
+
+		assetTransferClient.createAsset(id, "BLACK", 22, "FOO", 12);
+		log.info("AssetExists (created): {}", assetTransferClient.assetExists(id));
+
 		final List<AssetDTO.ListItem> assets = assetTransferClient.getAllAssets();
 		log.info("GetAllAssets: {}", assets);
-		log.info("GetAllAssets: {} - {}", assets.get(0).getKey(), assets.get(0).getRecord().getId());
-		log.info("ReadAsset: {}", assetTransferClient.readAsset("asset1"));
+
+		final AssetDTO.ListItem firstItem = assets.get(0);
+		log.info("GetAllAssets - FirstItem: {} - {}", firstItem.getKey(), firstItem.getRecord().getId());
+
+		log.info("ReadAsset (created): {}", assetTransferClient.readAsset(id));
+
+		assetTransferClient.updateAsset(id, "BLUE", 10, "FOO", 8);
+		log.info("ReadAsset (updated): {}", assetTransferClient.readAsset(id));
+
+		assetTransferClient.transferAsset(id, "BAR");
+		log.info("ReadAsset (transferred): {}", assetTransferClient.readAsset(id));
+
+		assetTransferClient.deleteAsset(id);
+		log.info("AssetExists (deleted): {}", assetTransferClient.assetExists(id));
 	}
 }
