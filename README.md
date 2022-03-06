@@ -56,9 +56,10 @@ A lab environment to deploy **Hyperledger Fabric** to **Kubernetes** with **Exte
   - `wget -qO - --no-check-certificate https://ca.org1.example.com/cainfo`
   - `wget -qO - --no-check-certificate https://ca.org2.example.com/cainfo`
 - `./start-network.sh`
-- `./start-ext-cc.sh`
-  - This step compiles the Go chain code, and it uses `https://proxy.golang.org` as Go proxy, defined in `.env`. 
-    If you have trouble accessing this site, you can set other proxy such as `https://goproxy.io`.
+- `./start-ext-cc.sh [-nb]`
+  - `-nb` - no build, just deploy already-built chaincode
+  - This step compiles the Go chain code, and it uses `https://proxy.golang.org` as Go proxy, defined in `.env`. If you
+    have trouble accessing this site, you can set other proxy such as `https://goproxy.io`.
 
 Now, if everything executed successfully, you should see the logs of the chain code like following text:
 ```text

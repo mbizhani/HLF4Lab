@@ -1,7 +1,3 @@
-/*
-SPDX-License-Identifier: Apache-2.0
-*/
-
 package main
 
 import (
@@ -41,7 +37,7 @@ type QueryResult struct {
 
 // InitLedger adds a base set of cars to the ledger
 func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) error {
-	log.Printf("InitLedger()")
+	log.Printf("InitLedger(): %s", GetClientInfo(ctx))
 
 	assets := []Asset{
 		{ID: "asset1", Color: "blue", Size: 5, Owner: "Tomoko", AppraisedValue: 300},
@@ -68,8 +64,27 @@ func (s *SmartContract) InitLedger(ctx contractapi.TransactionContextInterface) 
 	return nil
 }
 
+func (s *SmartContract) CreateAssetTransientOwner(ctx contractapi.TransactionContextInterface, id, color string, size int, appraisedValue int) error {
+	log.Printf("CreateAssetTransientOwner(%s): %s", id, GetClientInfo(ctx))
+
+	transient, err := ctx.GetStub().GetTransient()
+	if err != nil {
+		return err
+	}
+
+	bytes, ok := transient["owner"]
+	if !ok {
+		return fmt.Errorf("transient: 'owner' key not found")
+	}
+	owner := string(bytes)
+	log.Printf("CreateAssetTransientOwner: id=%s owner=%s", id, owner)
+	return s.CreateAsset(ctx, id, color, size, owner, appraisedValue)
+}
+
 // CreateAsset issues a new asset to the world state with given details.
 func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface, id, color string, size int, owner string, appraisedValue int) error {
+	log.Printf("CreateAsset(id=%s, owner=%s): %s", id, owner, GetClientInfo(ctx))
+
 	exists, err := s.AssetExists(ctx, id)
 	if err != nil {
 		return err
@@ -95,6 +110,8 @@ func (s *SmartContract) CreateAsset(ctx contractapi.TransactionContextInterface,
 
 // ReadAsset returns the asset stored in the world state with given id.
 func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, id string) (*Asset, error) {
+	log.Printf("ReadAsset(%s): %s", id, GetClientInfo(ctx))
+
 	assetJSON, err := ctx.GetStub().GetState(id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read from world state. %s", err.Error())
@@ -114,6 +131,8 @@ func (s *SmartContract) ReadAsset(ctx contractapi.TransactionContextInterface, i
 
 // UpdateAsset updates an existing asset in the world state with provided parameters.
 func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface, id, color string, size int, owner string, appraisedValue int) error {
+	log.Printf("UpdateAsset(%s): %s", id, GetClientInfo(ctx))
+
 	exists, err := s.AssetExists(ctx, id)
 	if err != nil {
 		return err
@@ -141,6 +160,8 @@ func (s *SmartContract) UpdateAsset(ctx contractapi.TransactionContextInterface,
 
 // DeleteAsset deletes a given asset from the world state.
 func (s *SmartContract) DeleteAsset(ctx contractapi.TransactionContextInterface, id string) error {
+	log.Printf("DeleteAsset(%s): %s", id, GetClientInfo(ctx))
+
 	exists, err := s.AssetExists(ctx, id)
 	if err != nil {
 		return err
@@ -164,6 +185,8 @@ func (s *SmartContract) AssetExists(ctx contractapi.TransactionContextInterface,
 
 // TransferAsset updates the owner field of asset with given id in world state.
 func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterface, id string, newOwner string) error {
+	log.Printf("TransferAsset(%s): %s", id, GetClientInfo(ctx))
+
 	asset, err := s.ReadAsset(ctx, id)
 	if err != nil {
 		return err
@@ -180,6 +203,8 @@ func (s *SmartContract) TransferAsset(ctx contractapi.TransactionContextInterfac
 
 // GetAllAssets returns all assets found in world state
 func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface) ([]QueryResult, error) {
+	log.Printf("GetAllAssets(): %s", GetClientInfo(ctx))
+
 	// range query with empty string for startKey and endKey does an open-ended query of all assets in the chaincode namespace.
 	resultsIterator, err := ctx.GetStub().GetStateByRange("", "")
 
@@ -208,6 +233,20 @@ func (s *SmartContract) GetAllAssets(ctx contractapi.TransactionContextInterface
 	}
 
 	return results, nil
+}
+
+func GetClientInfo(ctx contractapi.TransactionContextInterface) string {
+	id, errId := ctx.GetClientIdentity().GetID()
+	if errId != nil {
+		return fmt.Sprintf("ERROR: ctx.GetClientIdentity().GetID(): %s", errId)
+	}
+
+	mspId, errMSP := ctx.GetClientIdentity().GetMSPID()
+	if errMSP != nil {
+		return fmt.Sprintf("ERROR: ctx.GetClientIdentity().GetMSPID(): %s", errMSP)
+	}
+
+	return fmt.Sprintf("ClientIdentity - MSPID=%s, ID=%s", mspId, id)
 }
 
 func main() {

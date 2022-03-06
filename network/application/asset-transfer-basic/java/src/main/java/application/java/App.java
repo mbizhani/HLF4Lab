@@ -1,18 +1,16 @@
-/*
- * Copyright IBM Corp. All Rights Reserved.
- *
- * SPDX-License-Identifier: Apache-2.0
- */
-
-// Running TestApp: 
-// gradle runApp 
-
 package application.java;
 
 import org.hyperledger.fabric.gateway.*;
+import org.hyperledger.fabric.sdk.BlockInfo;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 
 public class App {
@@ -21,7 +19,7 @@ public class App {
 	public static final String PASS = "backendPw";
 
 	// helper function for getting connected to the gateway
-	public static Gateway connect() throws Exception {
+	static Gateway connect() throws Exception {
 		// Load an in-memory wallet for managing identities.
 		final Wallet wallet = EnrollAdmin.enroll(WALLET_PATH, USER, PASS);
 
@@ -35,13 +33,47 @@ public class App {
 		return builder.connect();
 	}
 
+	static void registerBlockListener(Network network) {
+		network.addBlockListener(event -> {
+			for (BlockInfo.EnvelopeInfo envelopeInfo : event.getEnvelopeInfos()) {
+				if (envelopeInfo.getType() == BlockInfo.EnvelopeType.TRANSACTION_ENVELOPE) {
+					final Long blockNumber = event.getBlockNumber();
+					final String transactionID = envelopeInfo.getTransactionID();
+					final BlockInfo.TransactionEnvelopeInfo transactionEnvelopeInfo = (BlockInfo.TransactionEnvelopeInfo) envelopeInfo;
+					for (BlockInfo.TransactionEnvelopeInfo.TransactionActionInfo transactionActionInfo : transactionEnvelopeInfo.getTransactionActionInfos()) {
+						final String methodName = new String(transactionActionInfo.getChaincodeInputArgs(0), UTF_8);
+
+						final List<String> args = new ArrayList<>(transactionActionInfo.getChaincodeInputArgsCount() - 1);
+						for (int i = 1; i < transactionActionInfo.getChaincodeInputArgsCount(); i++) {
+							args.add(new String(transactionActionInfo.getChaincodeInputArgs(i), UTF_8));
+						}
+
+						System.out.printf("--- TRX EVENT: no=%s, trxId=%s, method=%s, args=%s\n",
+							blockNumber, transactionID, methodName, args);
+					}
+				}
+			}
+		});
+	}
+
+	static void createAssetTransientOwner(Contract contract, String id, String color, Integer size, String owner, Integer appraisedValue) throws Exception {
+		final Map<String, byte[]> trs = new HashMap<>();
+		trs.put("owner", owner.getBytes(UTF_8));
+
+		final Transaction transaction = contract.createTransaction("createAssetTransientOwner");
+		transaction.setTransient(trs);
+		transaction.submit(id, color, String.valueOf(size), String.valueOf(appraisedValue));
+	}
+
 	public static void main(String[] args) {
 		// Connect to the network and invoke the smart contract
 		try (Gateway gateway = connect()) {
 
 			// get the network and contract
-			Network network = gateway.getNetwork("mychannel");
-			Contract contract = network.getContract("basic");
+			final Network network = gateway.getNetwork("mychannel");
+			registerBlockListener(network);
+
+			final Contract contract = network.getContract("basic");
 
 			byte[] result;
 
@@ -61,10 +93,19 @@ public class App {
 				System.out.println("ERROR: " + e.getMessage());
 			}
 
+			try {
+				System.out.println("\n");
+				System.out.println("Submit Transaction: CreateAsset asset100");
+				// CreateAsset creates an asset with ID asset13, color yellow, owner Tom, size 5 and appraisedValue of 1300
+				createAssetTransientOwner(contract, "asset100", "RED", 10, "SecretOwner", 10);
+			} catch (ContractException e) {
+				System.out.println("ERROR: " + e.getMessage());
+			}
+
 			System.out.println("\n");
-			System.out.println("Evaluate Transaction: ReadAsset asset13");
+			System.out.println("Evaluate Transaction: ReadAsset asset100");
 			// ReadAsset returns an asset with given assetID
-			result = contract.evaluateTransaction("readAsset", "asset13");
+			result = contract.evaluateTransaction("readAsset", "asset100");
 			System.out.println("Result: " + new String(result));
 
 			System.out.println("\n");
