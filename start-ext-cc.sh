@@ -117,19 +117,37 @@ source .env
 source common.sh
 
 if [ "$1" != "-nb" ]; then
-  pushd network/chaincode/asset-transfer-basic/go
-  docker image prune --filter label=stage=build -f
-  docker rmi "${CC_DOCKER_IMAGE}:${CC_DOCKER_TAG}" || true
-  docker rmi "${CC_DOCKER_PUSH_IMAGE}:${CC_DOCKER_TAG}" || true
-  docker build \
-    --build-arg GOPROXY="${GOPROXY}" \
-    -t "${CC_DOCKER_PUSH_IMAGE}:${CC_DOCKER_TAG}" .
+  if [ "${CC_LANG}" == "go" ]; then
+    pushd network/chaincode/asset-transfer-basic/go
+    docker image prune --filter label=stage=build -f
+    docker rmi "${CC_DOCKER_IMAGE}:${CC_DOCKER_TAG}" || true
+    docker rmi "${CC_DOCKER_PUSH_IMAGE}:${CC_DOCKER_TAG}" || true
+    docker build \
+      --build-arg GOPROXY="${GOPROXY}" \
+      -t "${CC_DOCKER_PUSH_IMAGE}:${CC_DOCKER_TAG}" .
 
-  if [ "${REG_USER}" ]; then
-    docker login -u "${REG_USER}" -p "${REG_PASS}" "${REG_URL}"
+    if [ "${REG_USER}" ]; then
+      docker login -u "${REG_USER}" -p "${REG_PASS}" "${REG_URL}"
+    fi
+    docker push "${CC_DOCKER_PUSH_IMAGE}:${CC_DOCKER_TAG}"
+    popd
+  elif [ "${CC_LANG}" == "java" ]; then
+    pushd network/chaincode/asset-transfer-basic/java
+    docker image prune --filter label=stage=build -f
+    docker rmi "${CC_DOCKER_IMAGE}:${CC_DOCKER_TAG}" || true
+    docker rmi "${CC_DOCKER_PUSH_IMAGE}:${CC_DOCKER_TAG}" || true
+    mvn clean package
+    docker build -t "${CC_DOCKER_PUSH_IMAGE}:${CC_DOCKER_TAG}" .
+
+    if [ "${REG_USER}" ]; then
+      docker login -u "${REG_USER}" -p "${REG_PASS}" "${REG_URL}"
+    fi
+    docker push "${CC_DOCKER_PUSH_IMAGE}:${CC_DOCKER_TAG}"
+    popd
+  else
+    echo "ERROR: Invalid Chaincode Lang: ${CC_LANG}"
+    exit 1
   fi
-  docker push "${CC_DOCKER_PUSH_IMAGE}:${CC_DOCKER_TAG}"
-  popd
 else
   echo "No Build for Chaincode, Use Current Image!"
 fi
@@ -193,7 +211,7 @@ commitCC "${PEER0_ORG1_POD}"
 sleep 5
 
 if [ "${CC_INIT_FCN}" ]; then
-  invokeInitCC "${PEER0_ORG1_POD}"
+  invokeInitCC "${PEER0_ORG2_POD}"
   sleep 2
   echo "----------------"
   echo " Chaincode Logs"

@@ -136,7 +136,7 @@ registry:
         hf.Registrar.Attributes: "*"
         hf.AffiliationMgr: true
     - name: backend
-      pass: backendpw
+      pass: backendPw
       type: client
       affiliation: ""
 

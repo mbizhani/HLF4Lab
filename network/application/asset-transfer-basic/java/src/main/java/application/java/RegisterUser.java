@@ -1,7 +1,3 @@
-/*
-SPDX-License-Identifier: Apache-2.0
-*/
-
 package application.java;
 
 import org.hyperledger.fabric.gateway.*;
@@ -15,11 +11,12 @@ import java.nio.file.Paths;
 import java.security.PrivateKey;
 import java.util.Set;
 
+@Deprecated
 public class RegisterUser {
 	public static void register(String username, String password, String walletPath) throws Exception {
 
 		// Create a CA client for interacting with the CA.
-		final HFCAClient caClient = EnrollAdmin.createClient();
+		final HFCAClient caClient = EnrollAdmin.createClient("org1");
 
 		// Create a wallet for managing identities
 		final Wallet wallet = Wallets.newFileSystemWallet(Paths.get(walletPath));
