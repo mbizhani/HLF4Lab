@@ -1,7 +1,8 @@
 package chaincode;
 
+import chaincode.shim.MyChaincodeBase;
 import lombok.extern.slf4j.Slf4j;
-import org.hyperledger.fabric.contract.ContractRouter;
+import org.hyperledger.fabric.shim.ChaincodeBase;
 import org.hyperledger.fabric.shim.ChaincodeServer;
 import org.hyperledger.fabric.shim.ChaincodeServerProperties;
 import org.hyperledger.fabric.shim.NettyChaincodeServer;
@@ -17,7 +18,7 @@ public class ContractBootstrap {
 	}
 
 	public static void main(String[] args) throws IOException, InterruptedException {
-		log.info("--- Contract Bootstrap . Main ---");
+		log.info("--- Contract Bootstrap: Main ---");
 
 		final String serverAddress = System.getenv("CHAINCODE_SERVER_ADDRESS");
 		if (serverAddress == null || serverAddress.isEmpty()) {
@@ -35,8 +36,8 @@ public class ContractBootstrap {
 		final ChaincodeServerProperties chaincodeServerProperties = new ChaincodeServerProperties();
 		chaincodeServerProperties.setServerAddress(new InetSocketAddress(parts[0], Integer.parseInt(parts[1])));
 
-		final ContractRouter contractRouter = new ContractRouter(new String[]{"-i", chaincodeId});
-		final ChaincodeServer chaincodeServer = new NettyChaincodeServer(contractRouter, chaincodeServerProperties);
-		contractRouter.startRouterWithChaincodeServer(chaincodeServer);
+		final ChaincodeBase chaincodeBase = new MyChaincodeBase(chaincodeId);
+		final ChaincodeServer chaincodeServer = new NettyChaincodeServer(chaincodeBase, chaincodeServerProperties);
+		chaincodeServer.start();
 	}
 }
