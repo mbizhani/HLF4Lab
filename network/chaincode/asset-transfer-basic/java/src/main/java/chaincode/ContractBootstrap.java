@@ -39,5 +39,11 @@ public class ContractBootstrap {
 		final ChaincodeBase chaincodeBase = new MyChaincodeBase(chaincodeId);
 		final ChaincodeServer chaincodeServer = new NettyChaincodeServer(chaincodeBase, chaincodeServerProperties);
 		chaincodeServer.start();
+
+		/*
+		final ContractRouter contractRouter = new ContractRouter(new String[]{"-i", chaincodeId});
+		final ChaincodeServer chaincodeServer = new NettyChaincodeServer(contractRouter, chaincodeServerProperties);
+		contractRouter.startRouterWithChaincodeServer(chaincodeServer);
+		*/
 	}
 }

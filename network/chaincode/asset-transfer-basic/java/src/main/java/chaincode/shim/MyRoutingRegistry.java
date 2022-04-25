@@ -1,8 +1,12 @@
 package chaincode.shim;
 
+import io.github.classgraph.ClassGraph;
+import io.github.classgraph.ClassInfo;
+import io.github.classgraph.ScanResult;
 import lombok.extern.slf4j.Slf4j;
 import org.hyperledger.fabric.contract.ContractInterface;
 import org.hyperledger.fabric.contract.ContractRuntimeException;
+import org.hyperledger.fabric.contract.annotation.DataType;
 import org.hyperledger.fabric.contract.annotation.Transaction;
 import org.hyperledger.fabric.contract.execution.InvocationRequest;
 import org.hyperledger.fabric.contract.routing.ContractDefinition;
@@ -11,9 +15,7 @@ import org.hyperledger.fabric.contract.routing.TxFunction;
 import org.hyperledger.fabric.contract.routing.TypeRegistry;
 
 import java.lang.reflect.Method;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 public class MyRoutingRegistry implements RoutingRegistry {
@@ -80,7 +82,27 @@ public class MyRoutingRegistry implements RoutingRegistry {
 
 	@Override
 	public void findAndSetContracts(TypeRegistry typeRegistry) {
-		throw new RuntimeException("MyRoutingRegistry.findAndSetContracts Not Impl");
+		final ClassGraph classGraph = new ClassGraph()
+			.enableClassInfo()
+			.enableAnnotationInfo();
+
+		final List<Class<?>> dataTypeClasses = new ArrayList<>();
+		try (ScanResult scanResult = classGraph.scan()) {
+			for (final ClassInfo classInfo : scanResult.getClassesWithAnnotation(DataType.class.getCanonicalName())) {
+				log.debug("Found class with @DataType: {}", classInfo.getName());
+				try {
+					final Class<?> dataTypeClass = classInfo.loadClass();
+					final DataType annotation = dataTypeClass.getAnnotation(DataType.class);
+					if (annotation != null) {
+						dataTypeClasses.add(dataTypeClass);
+					}
+				} catch (final IllegalArgumentException e) {
+					log.warn("Failed to load @DataType class: {}", classInfo.getName(), e);
+				}
+			}
+		}
+
+		dataTypeClasses.forEach(typeRegistry::addDataType);
 	}
 
 	// ------------------------------

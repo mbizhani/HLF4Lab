@@ -9,9 +9,11 @@ import org.hyperledger.fabric.contract.execution.ExecutionFactory;
 import org.hyperledger.fabric.contract.execution.ExecutionService;
 import org.hyperledger.fabric.contract.execution.InvocationRequest;
 import org.hyperledger.fabric.contract.execution.SerializerInterface;
+import org.hyperledger.fabric.contract.metadata.MetadataBuilder;
 import org.hyperledger.fabric.contract.routing.ContractDefinition;
 import org.hyperledger.fabric.contract.routing.RoutingRegistry;
 import org.hyperledger.fabric.contract.routing.TxFunction;
+import org.hyperledger.fabric.contract.routing.TypeRegistry;
 import org.hyperledger.fabric.contract.routing.impl.SerializerRegistryImpl;
 import org.hyperledger.fabric.metrics.Metrics;
 import org.hyperledger.fabric.shim.ChaincodeBase;
@@ -51,6 +53,11 @@ public class MyChaincodeBase extends ChaincodeBase {
 			log.error("MyChaincodeBase", e);
 			throw new ContractRuntimeException("Unable to locate Serializers", e);
 		}
+
+		final TypeRegistry typeRegistry = TypeRegistry.getRegistry();
+		registry.findAndSetContracts(typeRegistry);
+		MetadataBuilder.initialize(registry, typeRegistry);
+		log.info("Metadata follows: {}", MetadataBuilder.debugString());
 	}
 
 	@Override
