@@ -1,8 +1,7 @@
-.idea/
-bin/
-config/
-OUT/
-target/
+/.idea/
+/bin/
+/OUT/
+/target/
 
 *.log
 *.iml
