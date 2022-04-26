@@ -28,6 +28,8 @@ public class MyTxFunction implements TxFunction {
 	private List<ParameterDefinition> paramsList;
 	private boolean isUnknownTx = false;
 
+	// ------------------------------
+
 	public MyTxFunction(Method method, ContractInterface contract) {
 		this.method = method;
 
@@ -51,6 +53,8 @@ public class MyTxFunction implements TxFunction {
 
 		populateParams();
 	}
+
+	// ------------------------------
 
 	@Override
 	public boolean isUnknownTx() {

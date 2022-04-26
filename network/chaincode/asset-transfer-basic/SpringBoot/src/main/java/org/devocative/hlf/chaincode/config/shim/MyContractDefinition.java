@@ -23,6 +23,8 @@ public class MyContractDefinition implements ContractDefinition {
 	private final String name;
 	private final TxFunction unknownTx;
 
+	// ------------------------------
+
 	public MyContractDefinition(ContractInterface contract) {
 		this.contract = contract;
 		final Class<? extends ContractInterface> contractClass = contract.getClass();
@@ -47,6 +49,8 @@ public class MyContractDefinition implements ContractDefinition {
 			throw new ContractRuntimeException("Failure to find unknownTransaction method", e);
 		}
 	}
+
+	// ------------------------------
 
 	@Override
 	public String getName() {

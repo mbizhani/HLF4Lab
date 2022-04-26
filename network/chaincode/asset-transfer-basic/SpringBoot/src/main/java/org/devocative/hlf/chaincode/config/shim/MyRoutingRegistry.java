@@ -28,6 +28,8 @@ public class MyRoutingRegistry implements RoutingRegistry {
 
 	private final ApplicationContext context;
 
+	// ------------------------------
+
 	@Override
 	public ContractDefinition addNewContract(Class<ContractInterface> clz) {
 		log.info("Adding new Contract Class " + clz.getCanonicalName());

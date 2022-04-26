@@ -2,7 +2,6 @@ package org.devocative.hlf.chaincode.config.shim;
 
 import lombok.extern.slf4j.Slf4j;
 import org.hyperledger.fabric.contract.ContractInterface;
-import org.hyperledger.fabric.contract.ContractRuntimeException;
 import org.hyperledger.fabric.contract.annotation.Serializer;
 import org.hyperledger.fabric.contract.execution.ExecutionFactory;
 import org.hyperledger.fabric.contract.execution.ExecutionService;
@@ -38,8 +37,8 @@ public class MyChaincodeBase extends ChaincodeBase {
 
 	public MyChaincodeBase(RoutingRegistry registry, MySerializerRegistry serializers, ApplicationContext context) {
 		this.registry = registry;
-		this.context = context;
 		this.serializers = serializers;
+		this.context = context;
 
 		chaincodeId = System.getenv("CHAINCODE_ID");
 		if (chaincodeId == null || chaincodeId.isEmpty()) {
@@ -72,13 +71,13 @@ public class MyChaincodeBase extends ChaincodeBase {
 			serializers.findAndSetContents();
 		} catch (InstantiationException | IllegalAccessException e) {
 			log.error("MyChaincodeBase", e);
-			throw new ContractRuntimeException("Unable to locate Serializers", e);
+			throw new RuntimeException("Unable to locate Serializers", e);
 		}
 
 		final TypeRegistry typeRegistry = TypeRegistry.getRegistry();
 		registry.findAndSetContracts(typeRegistry);
 		MetadataBuilder.initialize(registry, typeRegistry);
-		log.info("Metadata follows: {}", MetadataBuilder.debugString());
+		log.info("MyChaincodeBase.Metadata: {}", MetadataBuilder.debugString());
 	}
 
 	@Override
@@ -94,7 +93,6 @@ public class MyChaincodeBase extends ChaincodeBase {
 	// ------------------------------
 
 	private Response processRequest(final ChaincodeStub stub) {
-		log.info("Got invoke routing request");
 		try {
 			if (stub.getStringArgs().size() > 0) {
 				log.info("Got the Invoke Request: func = {}({})", stub.getFunction(), stub.getParameters());

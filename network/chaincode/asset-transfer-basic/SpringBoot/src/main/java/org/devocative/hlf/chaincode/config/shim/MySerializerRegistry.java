@@ -30,17 +30,18 @@ public class MySerializerRegistry {
 	public void findAndSetContents() throws InstantiationException, IllegalAccessException {
 
 		final List<String> basePackages = ClassUtil.findBasePackages(context);
+		basePackages.add("org.hyperledger.fabric.contract");
 
-		log.info("Scan for @{}: basePackage = {}", annotationClass.getCanonicalName(), basePackages);
+		log.info("Scan for @{}: basePackage = {}", annotationClass.getSimpleName(), basePackages);
 
 		ClassUtil.scanPackagesForAnnotatedClasses(annotationClass, basePackages, beanDefinition -> {
 			try {
 				final Class<? extends SerializerInterface> cls = (Class<? extends SerializerInterface>) Class.forName(beanDefinition.getBeanClassName());
-				log.info("MySerializerRegistry: add SerializerInterface = {}", cls.getName());
-				add(cls.getCanonicalName(), Serializer.TARGET.TRANSACTION, cls);
+				log.info("MySerializerRegistry - SerializerInterface = {}", cls.getName());
+				add(cls.getName(), Serializer.TARGET.TRANSACTION, cls);
 			} catch (ClassNotFoundException e) {
 				log.warn("@{} Class Not Found: {}",
-					annotationClass.getCanonicalName(), beanDefinition.getBeanClassName(), e);
+					annotationClass.getSimpleName(), beanDefinition.getBeanClassName(), e);
 			}
 		});
 	}
@@ -48,7 +49,7 @@ public class MySerializerRegistry {
 	// ------------------------------
 
 	private void add(final String name, final Serializer.TARGET target, final Class<? extends SerializerInterface> clazz) {
-		log.debug("Adding new Class [{}] for [{}]", clazz.getCanonicalName(), target);
+		log.debug("Adding new Class [{}] for [{}]", clazz.getName(), target);
 
 		try {
 			final String key = name + ":" + target;
