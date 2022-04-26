@@ -1,8 +1,5 @@
 package org.devocative.hlf.chaincode.config.shim;
 
-import io.github.classgraph.ClassGraph;
-import io.github.classgraph.ClassInfo;
-import io.github.classgraph.ScanResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hyperledger.fabric.contract.ContractInterface;
@@ -18,7 +15,10 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -89,36 +89,18 @@ public class MyRoutingRegistry implements RoutingRegistry {
 
 	@Override
 	public void findAndSetContracts(TypeRegistry typeRegistry) {
-		final ClassGraph classGraph = new ClassGraph()
-			.enableClassInfo()
-			.enableAnnotationInfo();
+		final List<String> basePackages = ClassUtil.findBasePackages(context);
 
-		final List<Class<?>> dataTypeClasses = new ArrayList<>();
-		try (ScanResult scanResult = classGraph.scan()) {
-			for (final ClassInfo classInfo : scanResult.getClassesWithAnnotation(DataType.class.getCanonicalName())) {
-				log.debug("Found class with @DataType: {}", classInfo.getName());
-				try {
-					final Class<?> dataTypeClass = classInfo.loadClass();
-					final DataType annotation = dataTypeClass.getAnnotation(DataType.class);
-					if (annotation != null) {
-						dataTypeClasses.add(dataTypeClass);
-					}
-				} catch (final IllegalArgumentException e) {
-					log.warn("Failed to load @DataType class: {}", classInfo.getName(), e);
-				}
+		log.info("Scan for @DataType: basePackage = {}", basePackages);
+
+		ClassUtil.scanPackagesForAnnotatedClasses(DataType.class, basePackages, beanDefinition -> {
+			try {
+				final Class<?> beanClass = Class.forName(beanDefinition.getBeanClassName());
+				typeRegistry.addDataType(beanClass);
+				log.info("Register @DataType: {}", beanClass.getName());
+			} catch (ClassNotFoundException e) {
+				log.warn("@DataType Class Not Found: {}", beanDefinition.getBeanClassName(), e);
 			}
-		}
-
-		dataTypeClasses.forEach(typeRegistry::addDataType);
-	}
-
-	// ------------------------------
-
-	public ContractInterface create(Class<? extends ContractInterface> cls) {
-		try {
-			return cls.getDeclaredConstructor().newInstance();
-		} catch (Exception e) {
-			throw new ContractRuntimeException(e);
-		}
+		});
 	}
 }

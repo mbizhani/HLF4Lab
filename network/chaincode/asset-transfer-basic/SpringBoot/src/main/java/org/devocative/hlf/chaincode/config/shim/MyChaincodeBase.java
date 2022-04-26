@@ -13,7 +13,6 @@ import org.hyperledger.fabric.contract.routing.ContractDefinition;
 import org.hyperledger.fabric.contract.routing.RoutingRegistry;
 import org.hyperledger.fabric.contract.routing.TxFunction;
 import org.hyperledger.fabric.contract.routing.TypeRegistry;
-import org.hyperledger.fabric.contract.routing.impl.SerializerRegistryImpl;
 import org.hyperledger.fabric.metrics.Metrics;
 import org.hyperledger.fabric.shim.ChaincodeBase;
 import org.hyperledger.fabric.shim.ChaincodeStub;
@@ -29,24 +28,27 @@ import java.util.Properties;
 @Slf4j
 @Component
 public class MyChaincodeBase extends ChaincodeBase {
-	private final SerializerRegistryImpl serializers;
 	private final RoutingRegistry registry;
-
-	private final String chaincodeId;
+	private final MySerializerRegistry serializers;
 	private final ApplicationContext context;
 
-	public MyChaincodeBase(RoutingRegistry registry, ApplicationContext context) {
-		this.context = context;
+	private final String chaincodeId;
+
+	// ------------------------------
+
+	public MyChaincodeBase(RoutingRegistry registry, MySerializerRegistry serializers, ApplicationContext context) {
 		this.registry = registry;
+		this.context = context;
+		this.serializers = serializers;
 
 		chaincodeId = System.getenv("CHAINCODE_ID");
 		if (chaincodeId == null || chaincodeId.isEmpty()) {
 			throw new RuntimeException("Chaincode ID Not Found: 'CHAINCODE_ID' as env var");
 		}
 		log.info("--- MyChaincodeBase - chaincodeId={}", chaincodeId);
-
-		serializers = new SerializerRegistryImpl();
 	}
+
+	// ------------------------------
 
 	@PostConstruct
 	public void init() {
@@ -95,7 +97,7 @@ public class MyChaincodeBase extends ChaincodeBase {
 		log.info("Got invoke routing request");
 		try {
 			if (stub.getStringArgs().size() > 0) {
-				log.info("Got the invoke request for:" + stub.getFunction() + " " + stub.getParameters());
+				log.info("Got the Invoke Request: func = {}({})", stub.getFunction(), stub.getParameters());
 				final InvocationRequest request = ExecutionFactory.getInstance().createRequest(stub);
 				final TxFunction txFn = getRouting(request);
 
@@ -103,7 +105,7 @@ public class MyChaincodeBase extends ChaincodeBase {
 					Serializer.TARGET.TRANSACTION);
 				final ExecutionService executor = ExecutionFactory.getInstance().createExecutionService(si);
 
-				log.info("Got routing:" + txFn.getRouting());
+				log.info("Got Routing: {}", txFn.getRouting());
 				return executor.executeRequest(txFn, request, stub);
 			} else {
 				return ResponseUtils.newSuccessResponse();
@@ -113,11 +115,11 @@ public class MyChaincodeBase extends ChaincodeBase {
 		}
 	}
 
-	TxFunction getRouting(final InvocationRequest request) {
+	private TxFunction getRouting(final InvocationRequest request) {
 		if (registry.containsRoute(request)) {
 			return registry.getTxFn(request);
 		} else {
-			log.info("Namespace is " + request);
+			log.info("Namespace: {}", request.getNamespace());
 			final ContractDefinition contract = registry.getContract(request.getNamespace());
 			return contract.getUnknownRoute();
 		}

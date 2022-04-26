@@ -24,16 +24,18 @@ public class BootstrapChaincodeServer {
 
 	private ChaincodeServer chaincodeServer;
 
+	// ------------------------------
+
 	@Async
 	@EventListener(ApplicationStartedEvent.class)
 	public void init() {
-		log.info("--- BootstrapServer ---");
+		log.info("--- BootstrapChaincodeServer ---");
 
 		final String serverAddress = System.getenv("CHAINCODE_SERVER_ADDRESS");
 		if (serverAddress == null || serverAddress.isEmpty()) {
 			throw new RuntimeException("Chaincode Address Not Found: 'CHAINCODE_SERVER_ADDRESS' as env var");
 		}
-		log.info("--- BootstrapServer - serverAddress={}", serverAddress);
+		log.info("--- BootstrapChaincodeServer - serverAddress={}", serverAddress);
 
 		final String[] parts = serverAddress.split(":");
 		final ChaincodeServerProperties chaincodeServerProperties = new ChaincodeServerProperties();
@@ -50,7 +52,7 @@ public class BootstrapChaincodeServer {
 	@PreDestroy
 	public void shutdown() {
 		if (chaincodeServer != null) {
-			log.info("--- BootstrapServer - Shutting Down Chaincode Server");
+			log.info("--- BootstrapChaincodeServer - Shutting Down Chaincode Server");
 			chaincodeServer.stop();
 		}
 	}

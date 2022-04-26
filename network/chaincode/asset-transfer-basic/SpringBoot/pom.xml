@@ -43,13 +43,21 @@
 			<groupId>org.hyperledger.fabric-chaincode-java</groupId>
 			<artifactId>fabric-chaincode-shim</artifactId>
 			<version>2.4.1</version>
+			<exclusions>
+				<exclusion>
+					<groupId>io.github.classgraph</groupId>
+					<artifactId>classgraph</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
+		<!--
 		<dependency>
 			<groupId>io.github.classgraph</groupId>
 			<artifactId>classgraph</artifactId>
 			<version>4.8.47</version>
 		</dependency>
+		-->
 	</dependencies>
 
 	<build>
