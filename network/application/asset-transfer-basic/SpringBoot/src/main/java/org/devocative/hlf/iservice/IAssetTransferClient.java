@@ -1,12 +1,12 @@
 package org.devocative.hlf.iservice;
 
 import org.devocative.hlf.dto.AssetDTO;
-import org.devocative.thallo.hlf.HlfClient;
-import org.devocative.thallo.hlf.Submit;
+import org.devocative.thallo.fabric.gateway.FabricClient;
+import org.devocative.thallo.fabric.gateway.Submit;
 
 import java.util.List;
 
-@HlfClient
+@FabricClient
 public interface IAssetTransferClient {
 	AssetDTO readAsset(String id);
 

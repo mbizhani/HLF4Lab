@@ -1,10 +1,10 @@
 package org.devocative.hlf;
 
-import org.devocative.thallo.hlf.EnableHlfClients;
+import org.devocative.thallo.fabric.gateway.EnableFabricGateway;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@EnableHlfClients
+@EnableFabricGateway
 @SpringBootApplication
 public class AssetTransferApplication {
 	public static void main(String[] args) {
