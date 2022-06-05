@@ -12,7 +12,7 @@ public interface IAssetTransferClient {
 
 	boolean assetExists(String id);
 
-	List<AssetDTO.ListItem> getAllAssets();
+	List<AssetDTO> getAllAssets();
 
 	@Submit
 	void createAsset(String id, String color, Integer size, String owner, Integer appraisedValue);

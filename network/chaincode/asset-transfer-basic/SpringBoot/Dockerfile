@@ -1,4 +1,4 @@
-FROM store/oracle/jdk:11
+FROM openjdk:11.0.15-jdk-slim-bullseye
 
 ENV JAVA_OPTS=""
 

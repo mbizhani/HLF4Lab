@@ -171,7 +171,7 @@ public class AssetTransferContract implements ContractInterface {
 	public String getAllAssets(final Context ctx) {
 		ChaincodeStub stub = ctx.getStub();
 
-		List<Asset> queryResults = new ArrayList<Asset>();
+		List<Asset> queryResults = new ArrayList<>();
 
 		// To retrieve all assets from the ledger use getStateByRange with empty startKey & endKey.
 		// Giving empty startKey & endKey is interpreted as all the keys from beginning to end.

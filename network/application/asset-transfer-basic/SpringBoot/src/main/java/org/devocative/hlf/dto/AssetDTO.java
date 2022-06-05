@@ -9,20 +9,10 @@ import lombok.ToString;
 @Setter
 @ToString
 public class AssetDTO {
-	@JsonProperty("ID")
+	@JsonProperty("assetID")
 	private String id;
 	private String color;
 	private Integer size;
 	private String owner;
 	private Integer appraisedValue;
-
-	@Getter
-	@Setter
-	@ToString
-	public static class ListItem {
-		@JsonProperty("Key")
-		private String key;
-		@JsonProperty("Record")
-		private AssetDTO record;
-	}
 }

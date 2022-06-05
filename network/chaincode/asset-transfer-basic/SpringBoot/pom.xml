@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>org.devocative.hlf.chaincode</groupId>
@@ -48,16 +48,18 @@
 					<groupId>io.github.classgraph</groupId>
 					<artifactId>classgraph</artifactId>
 				</exclusion>
+				<exclusion>
+					<groupId>com.github.everit-org.json-schema</groupId>
+					<artifactId>org.everit.json.schema</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 
-		<!--
 		<dependency>
-			<groupId>io.github.classgraph</groupId>
-			<artifactId>classgraph</artifactId>
-			<version>4.8.47</version>
+			<groupId>com.github.erosb</groupId>
+			<artifactId>everit-json-schema</artifactId>
+			<version>1.14.1</version>
 		</dependency>
-		-->
 	</dependencies>
 
 	<build>

@@ -133,7 +133,7 @@ if [ "$1" != "-nb" ]; then
     popd
   elif [ "${CC_LANG}" == "java" ]; then
     pushd network/chaincode/asset-transfer-basic/SpringBoot
-    docker image prune --filter label=stage=build -f
+#    docker image prune --filter label=stage=build -f
     docker rmi "${CC_DOCKER_IMAGE}:${CC_DOCKER_TAG}" || true
     docker rmi "${CC_DOCKER_PUSH_IMAGE}:${CC_DOCKER_TAG}" || true
     mvn clean package

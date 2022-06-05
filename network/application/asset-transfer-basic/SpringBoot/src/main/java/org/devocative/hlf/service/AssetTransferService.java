@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.util.List;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -17,16 +18,16 @@ public class AssetTransferService {
 
 	@PostConstruct
 	public void init() {
-		final String id = "MyAsset001";
+		final String id = UUID.randomUUID().toString();
 
 		assetTransferClient.createAsset(id, "BLACK", 22, "FOO", 12);
 		log.info("AssetExists (created): {}", assetTransferClient.assetExists(id));
 
-		final List<AssetDTO.ListItem> assets = assetTransferClient.getAllAssets();
+		final List<AssetDTO> assets = assetTransferClient.getAllAssets();
 		log.info("GetAllAssets: {}", assets);
 
-		final AssetDTO.ListItem firstItem = assets.get(0);
-		log.info("GetAllAssets - FirstItem: {} - {}", firstItem.getKey(), firstItem.getRecord().getId());
+		final AssetDTO firstItem = assets.get(0);
+		log.info("GetAllAssets - FirstItem: {}", firstItem);
 
 		log.info("ReadAsset (created): {}", assetTransferClient.readAsset(id));
 
