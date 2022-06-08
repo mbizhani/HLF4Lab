@@ -4,9 +4,6 @@ metadata:
   name: {{ include "hlf-cc.fullname" . }}
   labels:
     {{- include "hlf-cc.labels" . | nindent 4 }}
-  annotations:
-    keights.coredns.rewrite/domain-name: {{ .Values.hlfCc.host }}
-
 spec:
   type: {{ .Values.service.type }}
   ports:

@@ -1,8 +1,9 @@
-package org.devocative.hlf.chaincode.cc;
+package org.devocative.hlf.chaincode;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.devocative.hlf.chaincode.model.Asset;
 import org.hyperledger.fabric.contract.ClientIdentity;
 import org.hyperledger.fabric.contract.Context;
 import org.hyperledger.fabric.contract.ContractInterface;

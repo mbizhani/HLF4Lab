@@ -1,4 +1,4 @@
-package org.devocative.hlf.chaincode.cc;
+package org.devocative.hlf.chaincode.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
