@@ -1,9 +1,6 @@
 package org.devocative.hlf.chaincode.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hyperledger.fabric.contract.annotation.DataType;
 import org.hyperledger.fabric.contract.annotation.Property;
 
@@ -11,6 +8,7 @@ import java.util.Objects;
 
 @Getter
 @Setter
+@ToString
 @DataType
 @NoArgsConstructor
 @AllArgsConstructor
@@ -56,11 +54,5 @@ public class Asset {
 	@Override
 	public int hashCode() {
 		return Objects.hash(getAssetID(), getColor(), getSize(), getOwner(), getAppraisedValue());
-	}
-
-	@Override
-	public String toString() {
-		return this.getClass().getSimpleName() + "@" + Integer.toHexString(hashCode()) + " [assetID=" + assetID + ", color="
-			+ color + ", size=" + size + ", owner=" + owner + ", appraisedValue=" + appraisedValue + "]";
 	}
 }

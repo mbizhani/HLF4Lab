@@ -5,5 +5,8 @@ metadata:
   labels:
   {{- include "hlf-cc.labels" . | nindent 4 }}
 data:
-  CHAINCODE_ID: {{ .Values.hlfCc.id | quote }}
-  CHAINCODE_SERVER_ADDRESS: {{ .Values.hlfCc.address | quote}}
+  THALLO_FABRIC_CHAINCODE_ID: "{{ .Values.hlfCc.id }}"
+  THALLO_FABRIC_CHAINCODE_SERVER_ADDRESS: "{{ .Values.hlfCc.address }}"
+  THALLO_FABRIC_CHAINCODE_TLS_ENABLED: "{{ .Values.hlfCc.tls.enabled }}"
+  THALLO_FABRIC_CHAINCODE_TLS_KEY_FILE: "{{ .Values.hlfCc.config.mountBaseDir }}/organizations/ordererOrganizations/example.com/chaincode/tls/server.key"
+  THALLO_FABRIC_CHAINCODE_TLS_CERT_FILE: "{{ .Values.hlfCc.config.mountBaseDir }}/organizations/ordererOrganizations/example.com/chaincode/tls/server.crt"

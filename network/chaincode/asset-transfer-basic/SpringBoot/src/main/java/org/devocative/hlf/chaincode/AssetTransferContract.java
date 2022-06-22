@@ -22,7 +22,7 @@ import java.util.Map;
 
 @Slf4j
 @Default
-@Contract(name = "basic")
+@Contract
 @Component
 public class AssetTransferContract implements ContractInterface {
 	private final ObjectMapper mapper = new ObjectMapper();
@@ -72,10 +72,11 @@ public class AssetTransferContract implements ContractInterface {
 		final ChaincodeStub stub = ctx.getStub();
 		final Map<String, byte[]> transientMap = stub.getTransient();
 		if (!transientMap.containsKey("owner")) {
-			String errorMessage = "Transient Not Found: key = 'owner'";
+			final String errorMessage = "Transient Not Found: key = 'owner'";
 			log.error(errorMessage);
 			throw new ChaincodeException(errorMessage, AssetTransferErrors.ASSET_ALREADY_EXISTS.toString());
 		}
+
 		final String owner = new String(transientMap.get("owner"));
 
 		createAsset(ctx, assetID, color, size, owner, appraisedValue);
@@ -87,7 +88,7 @@ public class AssetTransferContract implements ContractInterface {
 		final ChaincodeStub stub = ctx.getStub();
 
 		if (assetExists(ctx, assetID)) {
-			String errorMessage = String.format("Asset %s already exists", assetID);
+			final String errorMessage = String.format("Asset Already Existed: %s", assetID);
 			log.error(errorMessage);
 			throw new ChaincodeException(errorMessage, AssetTransferErrors.ASSET_ALREADY_EXISTS.toString());
 		}
@@ -95,45 +96,49 @@ public class AssetTransferContract implements ContractInterface {
 		final Asset asset = new Asset(assetID, color, size, owner, appraisedValue);
 		final String assetJSON = serialize(asset);
 		stub.putStringState(assetID, assetJSON);
+
+		log.info("Asset Created: {}", asset);
 	}
 
 	@Transaction(intent = Transaction.TYPE.EVALUATE)
-	public Asset readAsset(final Context ctx, final String assetID) {
+	public String readAsset(final Context ctx, final String assetID) {
 		final ChaincodeStub stub = ctx.getStub();
 		final String assetJSON = stub.getStringState(assetID);
 
 		if (assetJSON == null || assetJSON.isEmpty()) {
-			String errorMessage = String.format("Asset %s does not exist", assetID);
+			final String errorMessage = String.format("Asset Not Found (readAsset): %s", assetID);
 			log.error(errorMessage);
 			throw new ChaincodeException(errorMessage, AssetTransferErrors.ASSET_NOT_FOUND.toString());
 		}
 
-		return deserialize(assetJSON, Asset.class);
+		return assetJSON;
 	}
 
 	@Transaction(intent = Transaction.TYPE.SUBMIT)
-	public void updateAsset(final Context ctx, final String assetID, final String color, final int size,
+	public String updateAsset(final Context ctx, final String assetID, final String color, final int size,
 	                        final String owner, final int appraisedValue) {
 		final ChaincodeStub stub = ctx.getStub();
 
 		if (!assetExists(ctx, assetID)) {
-			String errorMessage = String.format("Asset %s does not exist", assetID);
+			final String errorMessage = String.format("Asset Not Found (updateAsset): %s", assetID);
 			log.error(errorMessage);
 			throw new ChaincodeException(errorMessage, AssetTransferErrors.ASSET_NOT_FOUND.toString());
 		}
 
-		Asset newAsset = new Asset(assetID, color, size, owner, appraisedValue);
-		String newAssetJSON = serialize(newAsset);
+		final Asset newAsset = new Asset(assetID, color, size, owner, appraisedValue);
+		final String newAssetJSON = serialize(newAsset);
 		stub.putStringState(assetID, newAssetJSON);
+
+		return newAssetJSON;
 	}
 
 	@Transaction(intent = Transaction.TYPE.SUBMIT)
 	public void deleteAsset(final Context ctx, final String assetID) {
-		ChaincodeStub stub = ctx.getStub();
+		final ChaincodeStub stub = ctx.getStub();
 
 		if (!assetExists(ctx, assetID)) {
-			String errorMessage = String.format("Asset %s does not exist", assetID);
-			System.out.println(errorMessage);
+			final String errorMessage = String.format("Asset Not Found (deleteAsset): %s", assetID);
+			log.error(errorMessage);
 			throw new ChaincodeException(errorMessage, AssetTransferErrors.ASSET_NOT_FOUND.toString());
 		}
 
@@ -142,48 +147,47 @@ public class AssetTransferContract implements ContractInterface {
 
 	@Transaction(intent = Transaction.TYPE.EVALUATE)
 	public boolean assetExists(final Context ctx, final String assetID) {
-		ChaincodeStub stub = ctx.getStub();
-		String assetJSON = stub.getStringState(assetID);
+		final ChaincodeStub stub = ctx.getStub();
+		final String assetJSON = stub.getStringState(assetID);
 
 		return (assetJSON != null && !assetJSON.isEmpty());
 	}
 
 	@Transaction(intent = Transaction.TYPE.SUBMIT)
-	public Asset transferAsset(final Context ctx, final String assetID, final String newOwner) {
-		ChaincodeStub stub = ctx.getStub();
-		String assetJSON = stub.getStringState(assetID);
+	public String transferAsset(final Context ctx, final String assetID, final String newOwner) {
+		final ChaincodeStub stub = ctx.getStub();
+		final String assetJSON = stub.getStringState(assetID);
 
 		if (assetJSON == null || assetJSON.isEmpty()) {
-			String errorMessage = String.format("Asset %s does not exist", assetID);
-			System.out.println(errorMessage);
+			final String errorMessage = String.format("Asset Not Found (transferAsset): %s", assetID);
+			log.error(errorMessage);
 			throw new ChaincodeException(errorMessage, AssetTransferErrors.ASSET_NOT_FOUND.toString());
 		}
 
-		Asset asset = deserialize(assetJSON, Asset.class);
+		final Asset asset = deserialize(assetJSON, Asset.class);
 
-		Asset newAsset = new Asset(asset.getAssetID(), asset.getColor(), asset.getSize(), newOwner, asset.getAppraisedValue());
-		String newAssetJSON = serialize(newAsset);
+		final Asset newAsset = new Asset(asset.getAssetID(), asset.getColor(), asset.getSize(), newOwner, asset.getAppraisedValue());
+		final String newAssetJSON = serialize(newAsset);
 		stub.putStringState(assetID, newAssetJSON);
 
-		return newAsset;
+		return newAssetJSON;
 	}
 
 	@Transaction(intent = Transaction.TYPE.EVALUATE)
 	public String getAllAssets(final Context ctx) {
-		ChaincodeStub stub = ctx.getStub();
+		final ChaincodeStub stub = ctx.getStub();
 
-		List<Asset> queryResults = new ArrayList<>();
+		final List<Asset> queryResults = new ArrayList<>();
 
 		// To retrieve all assets from the ledger use getStateByRange with empty startKey & endKey.
 		// Giving empty startKey & endKey is interpreted as all the keys from beginning to end.
 		// As another example, if you use startKey = 'asset0', endKey = 'asset9' ,
 		// then getStateByRange will retrieve asset with keys between asset0 (inclusive) and asset9 (exclusive) in lexical order.
-		QueryResultsIterator<KeyValue> results = stub.getStateByRange("", "");
+		final QueryResultsIterator<KeyValue> results = stub.getStateByRange("", "");
 
 		for (KeyValue result : results) {
-			Asset asset = deserialize(result.getStringValue(), Asset.class);
+			final Asset asset = deserialize(result.getStringValue(), Asset.class);
 			queryResults.add(asset);
-			System.out.println(asset.toString());
 		}
 
 		return serialize(queryResults);

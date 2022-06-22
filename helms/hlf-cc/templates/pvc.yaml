@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "hlf-cc.fullname" . }}
+  labels:
+  {{- include "hlf-cc.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      type: nfs
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  resources:
+    requests:
+      storage: {{ .Values.hlfCc.nfs.storage }}

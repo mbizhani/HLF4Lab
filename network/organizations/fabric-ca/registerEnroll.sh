@@ -313,4 +313,43 @@ createOrderer() {
   { set +x; } 2>/dev/null
 
   cp "${FABRIC_CA_CLIENT_HOME}"/msp/config.yaml "${FABRIC_CA_CLIENT_HOME}"/users/Admin@example.com/msp/config.yaml
+
+
+  infoln "Registering Chaincode User"
+  set -x
+  fabric-ca-client register \
+    --caname ${CA_NAME} \
+    --id.name chaincode \
+    --id.secret chaincodePw \
+    --tls.certfiles "${CA_SERVER_TLS_FILE}"
+  { set +x; } 2>/dev/null
+
+  infoln "Generating Chaincode MSP"
+  set -x
+  fabric-ca-client enroll \
+    --caname ${CA_NAME} \
+    -u https://chaincode:chaincodePw@${CA_SERVER_URL} \
+    --tls.certfiles "${CA_SERVER_TLS_FILE}" \
+    -M "${FABRIC_CA_CLIENT_HOME}"/chaincode/msp \
+    --csr.hosts basic-cc.org1.example.com
+  { set +x; } 2>/dev/null
+
+  infoln "Generating Chaincode-TLS Certificates"
+  set -x
+  fabric-ca-client enroll \
+    --caname ${CA_NAME} \
+    -u https://chaincode:chaincodePw@${CA_SERVER_URL} \
+    --tls.certfiles "${CA_SERVER_TLS_FILE}" \
+    --enrollment.profile tls \
+    -M "${FABRIC_CA_CLIENT_HOME}"/chaincode/tls \
+    --csr.hosts basic-cc.org1.example.com
+  { set +x; } 2>/dev/null
+
+  cp "${FABRIC_CA_CLIENT_HOME}"/chaincode/msp/cacerts/* "${FABRIC_CA_CLIENT_HOME}"/chaincode/msp/ca.crt
+  cp "${FABRIC_CA_CLIENT_HOME}"/chaincode/msp/signcerts/* "${FABRIC_CA_CLIENT_HOME}"/chaincode/msp/server.crt
+  cp "${FABRIC_CA_CLIENT_HOME}"/chaincode/msp/keystore/* "${FABRIC_CA_CLIENT_HOME}"/chaincode/msp/server.key
+
+  cp "${FABRIC_CA_CLIENT_HOME}"/chaincode/tls/tlscacerts/* "${FABRIC_CA_CLIENT_HOME}"/chaincode/tls/ca.crt
+  cp "${FABRIC_CA_CLIENT_HOME}"/chaincode/tls/signcerts/* "${FABRIC_CA_CLIENT_HOME}"/chaincode/tls/server.crt
+  cp "${FABRIC_CA_CLIENT_HOME}"/chaincode/tls/keystore/* "${FABRIC_CA_CLIENT_HOME}"/chaincode/tls/server.key
 }

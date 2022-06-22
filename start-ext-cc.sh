@@ -127,20 +127,19 @@ if [ "$1" != "-nb" ]; then
       -t "${CC_DOCKER_PUSH_IMAGE}:${CC_DOCKER_TAG}" .
 
     if [ "${REG_USER}" ]; then
-      docker login -u "${REG_USER}" -p "${REG_PASS}" "${REG_URL}"
+      docker login -u "${REG_USER}" -p "${REG_PASS}" "${REG_PUSH_URL}"
     fi
     docker push "${CC_DOCKER_PUSH_IMAGE}:${CC_DOCKER_TAG}"
     popd
   elif [ "${CC_LANG}" == "java" ]; then
     pushd network/chaincode/asset-transfer-basic/SpringBoot
-#    docker image prune --filter label=stage=build -f
     docker rmi "${CC_DOCKER_IMAGE}:${CC_DOCKER_TAG}" || true
     docker rmi "${CC_DOCKER_PUSH_IMAGE}:${CC_DOCKER_TAG}" || true
     mvn clean package
     docker build -t "${CC_DOCKER_PUSH_IMAGE}:${CC_DOCKER_TAG}" .
 
     if [ "${REG_USER}" ]; then
-      docker login -u "${REG_USER}" -p "${REG_PASS}" "${REG_URL}"
+      docker login -u "${REG_USER}" -p "${REG_PASS}" "${REG_PUSH_URL}"
     fi
     docker push "${CC_DOCKER_PUSH_IMAGE}:${CC_DOCKER_TAG}"
     popd
@@ -152,14 +151,31 @@ else
   echo "No Build for Chaincode, Use Current Image!"
 fi
 
+if [ "${CC_TLS_ENABLED}" == "true" ]; then
+  ROOTCA_CRT="$(sudo awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}' ${NFS_DIR}/organizations/ordererOrganizations/example.com/chaincode/tls/ca.crt)"
+  CLIENT_KEY="$(sudo awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}' ${NFS_DIR}/organizations/ordererOrganizations/example.com/chaincode/msp/server.key)"
+  CLIENT_CRT="$(sudo awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}' ${NFS_DIR}/organizations/ordererOrganizations/example.com/chaincode/msp/server.crt)"
 
-cat > "${OUT_DIR}"/connection.json << EOF
+  cat > "${OUT_DIR}"/connection.json << EOF
+{
+  "address": "${CC_APP_HOST}:${CC_APP_PORT}",
+  "dial_timeout": "10s",
+  "tls_required": true,
+  "client_auth_required": true,
+  "client_key": "${CLIENT_KEY}",
+  "client_cert": "${CLIENT_CRT}",
+  "root_cert": "${ROOTCA_CRT}"
+}
+EOF
+else
+  cat > "${OUT_DIR}"/connection.json << EOF
 {
   "address": "${CC_APP_HOST}:${CC_APP_PORT}",
   "dial_timeout": "10s",
   "tls_required": false
 }
 EOF
+fi
 cat > "${OUT_DIR}"/metadata.json << EOF
 {
   "type": "external",
@@ -200,7 +216,10 @@ helm install basic helms/hlf-cc \
   --set image.pullPolicy="Always" \
   --set hlfCc.id="${PACKAGE_ID}" \
   --set hlfCc.address="0.0.0.0:${CC_APP_PORT}" \
-  --set hlfCc.host="${CC_APP_HOST}"
+  --set hlfCc.host="${CC_APP_HOST}" \
+  --set hlfCc.nfs.path="${NFS_DIR}" \
+  --set hlfCc.nfs.server="${NFS_SERVER}" \
+  --set hlfCc.tls.enabled="${CC_TLS_ENABLED}"
 waitForChart "basic"
 
 approveForMyOrg "${PEER0_ORG1_POD}"

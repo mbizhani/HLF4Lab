@@ -1,7 +1,14 @@
 hlfCc:
   id: "ID"
   address: "HOST:PORT"
-  host: ""
+  config:
+    mountBaseDir: /hlf
+  nfs:
+    path: ""
+    server: ""
+    storage: 1Gi
+  tls:
+    enabled: true
 
 replicaCount: 1
 
