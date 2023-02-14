@@ -1,4 +1,4 @@
-FROM store/oracle/jdk:11
+FROM eclipse-temurin:11.0.15_10-jre-alpine
 
 ENV JAVA_OPTS=""
 

@@ -1,8 +1,8 @@
-DROP USER IF EXISTS :user;
-CREATE USER :user WITH PASSWORD :passwd;
-DROP DATABASE IF EXISTS :dbname;
-CREATE DATABASE :dbname owner :user;
-\c :dbname;
+-- DROP USER IF EXISTS :user;
+-- CREATE USER :user WITH PASSWORD :passwd;
+-- DROP DATABASE IF EXISTS :dbname;
+-- CREATE DATABASE :dbname owner :user;
+-- \c :dbname;
 --
 
 -- ----------------------------
@@ -25,7 +25,7 @@ CREATE TABLE blocks
     network_name varchar(255)
 );
 
-ALTER table blocks owner to :user;
+-- ALTER table blocks owner to :user;
 
 -- ----------------------------
 --  Table structure for `chaincodes`
@@ -44,7 +44,7 @@ CREATE TABLE chaincodes
     network_name varchar(255)
 );
 
-ALTER table chaincodes owner to :user;
+-- ALTER table chaincodes owner to :user;
 Alter sequence chaincodes_id_seq restart with 10;
 
 -- ---------------------------
@@ -62,7 +62,7 @@ CREATE TABLE peer_ref_chaincode
     createdt Timestamp DEFAULT NULL,
     network_name varchar(255)
 );
-ALTER table peer_ref_chaincode owner to :user;
+-- ALTER table peer_ref_chaincode owner to :user;
 
 -- ----------------------------
 --  Table structure for `channel`
@@ -87,7 +87,7 @@ CREATE TABLE channel
     network_name varchar(255)
 );
 
-ALTER table channel owner to :user;
+-- ALTER table channel owner to :user;
 Alter sequence channel_id_seq restart with 3;
 -- ----------------------------
 --  Table structure for `peer`
@@ -109,7 +109,7 @@ CREATE TABLE peer
     peer_type character varying(256) DEFAULT NULL,
     network_name varchar(255)
 );
-ALTER table peer owner to :user;
+-- ALTER table peer owner to :user;
 -- ---------------------------
 --  Table structure for `peer_ref_channel`
 -- ----------------------------
@@ -124,7 +124,7 @@ CREATE TABLE peer_ref_channel
     peer_type character varying(256) DEFAULT NULL,
     network_name varchar(255)
 );
-ALTER table peer_ref_channel owner to :user;
+-- ALTER table peer_ref_channel owner to :user;
 
 -- ====================Orderer BE-303=====================================
 -- ----------------------------
@@ -142,7 +142,7 @@ CREATE TABLE orderer
     createdt timestamp DEFAULT NULL,
     network_name varchar(255)
 );
-ALTER table orderer owner to :user;
+-- ALTER table orderer owner to :user;
 
 --// ====================Orderer BE-303=====================================
 -- ----------------------------
@@ -177,7 +177,7 @@ CREATE TABLE transactions
     network_name varchar(255)
 );
 
-ALTER table transactions owner to :user;
+-- ALTER table transactions owner to :user;
 Alter sequence transactions_id_seq restart with 6;
 
 -- ---------------------------
@@ -199,7 +199,7 @@ CREATE TABLE users
     "createdAt" timestamp NOT NULL,
     "updatedAt" timestamp NOT NULL
 );
-ALTER table users owner to :user;
+-- ALTER table users owner to :user;
 
 DROP TABLE IF EXISTS write_lock;
 CREATE TABLE write_lock
@@ -207,7 +207,7 @@ CREATE TABLE write_lock
     write_lock SERIAl PRIMARY KEY
 );
 
-ALTER table write_lock owner to :user;
+-- ALTER table write_lock owner to :user;
 Alter sequence write_lock_write_lock_seq restart with 2;
 
 DROP INDEX IF EXISTS blocks_blocknum_idx;
@@ -251,4 +251,4 @@ DROP INDEX IF EXISTS channel_channel_hash_idx;
 CREATE INDEX ON channel
 (channel_hash);
 
-GRANT SELECT, INSERT, UPDATE,DELETE ON ALL TABLES IN SCHEMA PUBLIC to :user;
+-- GRANT SELECT, INSERT, UPDATE,DELETE ON ALL TABLES IN SCHEMA PUBLIC to :user;

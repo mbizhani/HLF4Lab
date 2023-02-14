@@ -151,6 +151,7 @@ else
   echo "No Build for Chaincode, Use Current Image!"
 fi
 
+# TIP: https://stackoverflow.com/questions/68670102/hyperledger-fabric-external-chaincode-with-tls-from-fabric-ca
 if [ "${CC_TLS_ENABLED}" == "true" ]; then
   ROOTCA_CRT="$(sudo awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}' ${NFS_DIR}/organizations/ordererOrganizations/example.com/chaincode/tls/ca.crt)"
   CLIENT_KEY="$(sudo awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}' ${NFS_DIR}/organizations/ordererOrganizations/example.com/chaincode/msp/server.key)"

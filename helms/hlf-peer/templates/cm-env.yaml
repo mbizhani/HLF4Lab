@@ -7,7 +7,6 @@ metadata:
 data:
   FABRIC_LOGGING_SPEC: "INFO"
   CORE_PEER_TLS_ENABLED: "true"
-  CORE_PEER_PROFILE_ENABLED: "true"
   CORE_PEER_TLS_CERT_FILE: "{{ .Values.hlfPeer.config.mountBaseDir }}/{{ .Values.hlfPeer.config.cmpDir }}/tls/server.crt"
   CORE_PEER_TLS_KEY_FILE: "{{ .Values.hlfPeer.config.mountBaseDir }}/{{ .Values.hlfPeer.config.cmpDir }}/tls/server.key"
   CORE_PEER_TLS_ROOTCERT_FILE: "{{ .Values.hlfPeer.config.mountBaseDir }}/{{ .Values.hlfPeer.config.cmpDir }}/tls/ca.crt"
@@ -20,8 +19,6 @@ data:
   CORE_PEER_CHAINCODELISTENADDRESS: "0.0.0.0:{{ .Values.hlfPeer.chaincode.port }}"
   CORE_PEER_GOSSIP_BOOTSTRAP: "{{ .Values.hlfPeer.config.fqdn }}:{{ .Values.service.port }}"
   CORE_PEER_GOSSIP_EXTERNALENDPOINT: "{{ .Values.hlfPeer.config.fqdn }}:{{ .Values.service.port }}"
-  CORE_PEER_GOSSIP_ORGLEADER: "false"
-  CORE_PEER_GOSSIP_USELEADERELECTION: "true"
   CORE_PEER_LOCALMSPID: "{{ .Values.hlfPeer.config.mspId }}"
   CORE_PEER_MSPCONFIGPATH: "{{ .Values.hlfPeer.config.mountBaseDir }}/{{ .Values.hlfPeer.config.cmpDir }}/msp"
   CORE_PEER_FILESYSTEMPATH: "{{ .Values.hlfPeer.config.mountBaseDir }}/{{ .Values.hlfPeer.config.cmpDir }}/ledger"
