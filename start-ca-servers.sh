@@ -37,17 +37,14 @@ CA_ORG2_POD="$(kubectl -n "${NAMESPACE}" get pod -l app.kubernetes.io/instance=c
 kubectl -n "${NAMESPACE}" exec "${CA_ORDERER_POD}" -- sh -c "
   . /hlf/fabric-ca/registerEnroll.sh
   createOrderer ${CA_ORD_PORT}
-  echo \"*** Orderer MSP Finished\"
 "
 
 kubectl -n "${NAMESPACE}" exec "${CA_ORG1_POD}" -- sh -c "
   . /hlf/fabric-ca/registerEnroll.sh
-  createOrg1 ${CA_ORG1_PORT}
-  echo \"*** Org1 MSP Finished\"
+  createOrg 1 ${CA_ORG1_PORT}
 "
 
 kubectl -n "${NAMESPACE}" exec "${CA_ORG2_POD}" -- sh -c "
   . /hlf/fabric-ca/registerEnroll.sh
-  createOrg2 ${CA_ORG2_PORT}
-  echo \"*** Org2 MSP Finished\"
+  createOrg 2 ${CA_ORG2_PORT}
 "
