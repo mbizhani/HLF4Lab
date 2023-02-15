@@ -50,7 +50,7 @@ A lab environment to deploy **Hyperledger Fabric** to **Kubernetes** with **Exte
 - Download fabric binaries [[hyperledger-fabric-linux-amd64-2.2.0.tar.gz](https://github.com/hyperledger/fabric/releases/download/v2.2.0/hyperledger-fabric-linux-amd64-2.2.0.tar.gz)]
   - Unarchive it
   - Copy the `bin` directory to `HLF4Lab` directory
-  - Note: only `configtxgen` is required
+    - Note: only `configtxgen` is required
 - `./start-ca-servers.sh`
   - `wget -qO - --no-check-certificate https://ca.example.com/cainfo`
   - `wget -qO - --no-check-certificate https://ca.org1.example.com/cainfo`

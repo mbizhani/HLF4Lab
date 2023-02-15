@@ -122,5 +122,5 @@ sudo cp -rf "${OUT_DIR}"/organizations "${NFS_DIR}"
 ## copy CA's pem for application to create 'wallet'
 mkdir -p "${OUT_DIR}/ca"
 for org in 1 2; do
-  cp ${NFS_DIR}/organizations/peerOrganizations/org${org}.example.com/ca/*.pem ${OUT_DIR}/ca
+  cp "${NFS_DIR}"/organizations/peerOrganizations/org${org}.example.com/ca/*.pem "${OUT_DIR}"/ca
 done

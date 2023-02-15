@@ -9,23 +9,13 @@ import java.util.Objects;
 @Getter
 @Setter
 @ToString
-@DataType
 @NoArgsConstructor
 @AllArgsConstructor
 public class Asset {
-	@Property
 	private String assetID;
-
-	@Property
 	private String color;
-
-	@Property
 	private int size;
-
-	@Property
 	private String owner;
-
-	@Property
 	private int appraisedValue;
 
 	// ------------------------------
