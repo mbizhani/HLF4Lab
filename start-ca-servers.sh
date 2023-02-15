@@ -15,13 +15,13 @@ helm install ca-orderer helms/hlf-ca \
 helm install ca-org1 helms/hlf-ca \
   -f values/ca-org1.yaml \
   --set service.type="${SERVICE_TYPE}" \
-  --set service.port="${CA_ORG1_PORT}" \
+  --set service.port="$(caPort 1)" \
   --set hlfCa.nfs.path="${NFS_DIR}" \
   --set hlfCa.nfs.server="${NFS_SERVER}"
 helm install ca-org2 helms/hlf-ca \
   -f values/ca-org2.yaml \
   --set service.type="${SERVICE_TYPE}" \
-  --set service.port="${CA_ORG2_PORT}" \
+  --set service.port="$(caPort 2)" \
   --set hlfCa.nfs.path="${NFS_DIR}" \
   --set hlfCa.nfs.server="${NFS_SERVER}"
 waitForChart "ca-orderer"
@@ -41,10 +41,10 @@ kubectl -n "${NAMESPACE}" exec "${CA_ORDERER_POD}" -- sh -c "
 
 kubectl -n "${NAMESPACE}" exec "${CA_ORG1_POD}" -- sh -c "
   . /hlf/fabric-ca/registerEnroll.sh
-  createOrg 1 ${CA_ORG1_PORT}
+  createOrg 1 $(caPort 1)
 "
 
 kubectl -n "${NAMESPACE}" exec "${CA_ORG2_POD}" -- sh -c "
   . /hlf/fabric-ca/registerEnroll.sh
-  createOrg 2 ${CA_ORG2_PORT}
+  createOrg 2 $(caPort 2)
 "

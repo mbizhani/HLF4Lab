@@ -42,9 +42,9 @@ function commitCC() {
       --channelID ${CHANNEL_NAME} \
       --name ${CC_NAME} \
       --version ${CC_VERSION} \
-      --peerAddresses peer0.org1.example.com:${PEER_ORG1_PORT} \
+      --peerAddresses peer0.org1.example.com:$(peerPort 1) \
       --tlsRootCertFiles /hlf/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt \
-      --peerAddresses peer0.org2.example.com:${PEER_ORG2_PORT} \
+      --peerAddresses peer0.org2.example.com:$(peerPort 2) \
       --tlsRootCertFiles /hlf/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt \
       --sequence ${CC_SEQUENCE}
 
@@ -101,9 +101,9 @@ function invokeInitCC() {
       --tls --cafile ${ORDERER_CA} \
       --channelID ${CHANNEL_NAME} \
       --name ${CC_NAME} \
-      --peerAddresses peer0.org1.example.com:${PEER_ORG1_PORT} \
+      --peerAddresses peer0.org1.example.com:$(peerPort 1) \
       --tlsRootCertFiles /hlf/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt \
-      --peerAddresses peer0.org2.example.com:${PEER_ORG2_PORT} \
+      --peerAddresses peer0.org2.example.com:$(peerPort 2) \
       --tlsRootCertFiles /hlf/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt \
       -c '${FCN_CALL}'
 
