@@ -3,48 +3,51 @@
 source .env
 source common.sh
 
+cp -rf network/organizations/fabric-ca "${OUT_DIR}"
+for ORG_ID in 1 2; do
+  mkdir -p "${OUT_DIR}"/fabric-ca/org${ORG_ID}
+  eval "cat <<EOF
+$(<network/organizations/fabric-ca-server-config-ORG.yaml)
+EOF" > "${OUT_DIR}"/fabric-ca/org${ORG_ID}/fabric-ca-server-config.yaml
+done
 
-sudo cp -rf network/organizations/fabric-ca "${NFS_DIR}"
+sudo cp -rf "${OUT_DIR}"/fabric-ca "${NFS_DIR}"
+
+##############
+# ORDERER  CA
+##############
 helm install ca-orderer helms/hlf-ca \
   --create-namespace \
-  -f values/ca-orderer.yaml \
   --set service.type="${SERVICE_TYPE}" \
   --set service.port="${CA_ORD_PORT}" \
   --set hlfCa.nfs.path="${NFS_DIR}" \
-  --set hlfCa.nfs.server="${NFS_SERVER}"
-helm install ca-org1 helms/hlf-ca \
-  -f values/ca-org1.yaml \
-  --set service.type="${SERVICE_TYPE}" \
-  --set service.port="$(caPort 1)" \
-  --set hlfCa.nfs.path="${NFS_DIR}" \
-  --set hlfCa.nfs.server="${NFS_SERVER}"
-helm install ca-org2 helms/hlf-ca \
-  -f values/ca-org2.yaml \
-  --set service.type="${SERVICE_TYPE}" \
-  --set service.port="$(caPort 2)" \
-  --set hlfCa.nfs.path="${NFS_DIR}" \
-  --set hlfCa.nfs.server="${NFS_SERVER}"
-waitForChart "ca-orderer"
-waitForChart "ca-org1"
-waitForChart "ca-org2"
+  --set hlfCa.nfs.server="${NFS_SERVER}" \
+  -f - <<EOF
+hlfCa:
+  config:
+    serverConfigDir: fabric-ca/ordererOrg
+image:
+  repository: ${REG_URL}/hyperledger/fabric-ca
+ingress:
+  enabled: true
+  hosts:
+    - host: ca.example.com
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+EOF
 
-sleep 2
+waitForChart "ca-orderer"
 
 CA_ORDERER_POD="$(kubectl -n "${NAMESPACE}" get pod -l app.kubernetes.io/instance=ca-orderer -o jsonpath="{.items[0].metadata.name}")"
-CA_ORG1_POD="$(kubectl -n "${NAMESPACE}" get pod -l app.kubernetes.io/instance=ca-org1 -o jsonpath="{.items[0].metadata.name}")"
-CA_ORG2_POD="$(kubectl -n "${NAMESPACE}" get pod -l app.kubernetes.io/instance=ca-org2 -o jsonpath="{.items[0].metadata.name}")"
-
 kubectl -n "${NAMESPACE}" exec "${CA_ORDERER_POD}" -- sh -c "
   . /hlf/fabric-ca/registerEnroll.sh
   createOrderer ${CA_ORD_PORT}
 "
 
-kubectl -n "${NAMESPACE}" exec "${CA_ORG1_POD}" -- sh -c "
-  . /hlf/fabric-ca/registerEnroll.sh
-  createOrg 1 $(caPort 1)
-"
-
-kubectl -n "${NAMESPACE}" exec "${CA_ORG2_POD}" -- sh -c "
-  . /hlf/fabric-ca/registerEnroll.sh
-  createOrg 2 $(caPort 2)
-"
+################
+# ORG 1 & 2  CA
+################
+for ORG_ID in 1 2; do
+  installCA4Org ${ORG_ID}
+done

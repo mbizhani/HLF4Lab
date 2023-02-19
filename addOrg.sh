@@ -3,20 +3,14 @@
 source .env
 source common.sh
 
-orgId="3"
+ORG_ID="3"
 
-helm install ca-org${orgId} helms/hlf-ca \
-  -f values/ca-org${orgId}.yaml \
-  --set service.type="${SERVICE_TYPE}" \
-  --set service.port="$(caPort ${orgId})" \
-  --set hlfCa.nfs.path="${NFS_DIR}" \
-  --set hlfCa.nfs.server="${NFS_SERVER}"
+mkdir -p "${OUT_DIR}"/fabric-ca/org${ORG_ID}
+eval "cat <<EOF
+$(<network/organizations/fabric-ca-server-config-ORG.yaml)
+EOF" > "${OUT_DIR}"/fabric-ca/org${ORG_ID}/fabric-ca-server-config.yaml
 
-waitForChart "ca-org${orgId}"
+sudo cp -rf "${OUT_DIR}"/fabric-ca "${NFS_DIR}"
 
-CA_POD="$(kubectl -n "${NAMESPACE}" get pod -l app.kubernetes.io/instance=ca-org${orgId} -o jsonpath="{.items[0].metadata.name}")"
+installCA4Org ${ORG_ID}
 
-kubectl -n "${NAMESPACE}" exec "${CA_POD}" -- sh -c "
-  . /hlf/fabric-ca/registerEnroll.sh
-  createOrg ${orgId} $(caPort ${orgId})
-"
