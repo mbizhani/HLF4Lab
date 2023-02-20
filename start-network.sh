@@ -105,22 +105,3 @@ kubectl -n "${NAMESPACE}" exec "${PEER0_ORG2_POD}" -c "${PEER_CTR}" -- sh -c "
     --tls --cafile ${ORDERER_CA}
   echo \"*** Peer0.Org2 - Update: \$?\"
   "
-
-##
-## $( [ $ORG == "1" ] && echo ${PEER_ORG1_PORT} || echo ${PEER_ORG2_PORT})
-
-for org in 1 2; do
-  PEER_PEM="${NFS_DIR}/organizations/peerOrganizations/org${org}.example.com/tlsca/tlsca.org${org}.example.com-cert.pem"
-  CA_PEM="${NFS_DIR}/organizations/peerOrganizations/org${org}.example.com/ca/ca.org${org}.example.com-cert.pem"
-  mkdir -p "${OUT_DIR}/organizations/peerOrganizations/org${org}.example.com"
-  echo "$(yaml_ccp ${org} "$(peerPort $org)" "$(caPort $org)" "${PEER_PEM}" "${CA_PEM}")" > \
-    "${OUT_DIR}/organizations/peerOrganizations/org${org}.example.com/connection-org${org}.yaml"
-done
-
-sudo cp -rf "${OUT_DIR}"/organizations "${NFS_DIR}"
-
-## copy CA's pem for application to create 'wallet'
-mkdir -p "${OUT_DIR}/ca"
-for org in 1 2; do
-  cp "${NFS_DIR}"/organizations/peerOrganizations/org${org}.example.com/ca/*.pem "${OUT_DIR}"/ca
-done

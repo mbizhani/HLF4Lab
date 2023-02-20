@@ -34,8 +34,8 @@ function peerPort() {
 
 function waitForChart() {
   CHART=$1
-  while [ "$(kubectl -n ${NAMESPACE} get pod -l app.kubernetes.io/instance="${CHART}" | wc -l )" == "0" ] ||
-        [ "$(kubectl -n ${NAMESPACE} get pod -l app.kubernetes.io/instance="${CHART}" -o jsonpath="{.items[0].status.phase}")" != "Running" ]; do
+  while [ "$(kubectl -n "${NAMESPACE}" get pod -l app.kubernetes.io/instance="${CHART}" | wc -l )" == "0" ] ||
+        [ "$(kubectl -n "${NAMESPACE}" get pod -l app.kubernetes.io/instance="${CHART}" -o jsonpath="{.items[0].status.phase}")" != "Running" ]; do
     echo "Waiting for ${CHART} ..."
     sleep 2
   done
@@ -43,9 +43,18 @@ function waitForChart() {
 
 function waitForNoChart() {
   CHART=$1
-  while [ "$(kubectl -n ${NAMESPACE} get pod -l app.kubernetes.io/instance="${CHART}" | wc -l )" == "2" ]; do
+  while [ "$(kubectl -n "${NAMESPACE}" get pod -l app.kubernetes.io/instance="${CHART}" | wc -l )" == "2" ]; do
     echo "Waiting for no ${CHART} ..."
     sleep 3
+  done
+}
+
+function waitForFile() {
+  FILE=$1
+
+  while [ ! -f "${FILE}" ]; do
+    echo "Waiting for file ${FILE} ..."
+    sleep 2
   done
 }
 
@@ -56,8 +65,8 @@ function one_line_pem {
 }
 
 function yaml_ccp {
-    local PP=$(one_line_pem $4)
-    local CP=$(one_line_pem $5)
+    local PP=$(one_line_pem "$4")
+    local CP=$(one_line_pem "$5")
     sed -e "s/\${ORG}/$1/" \
         -e "s/\${P0PORT}/$2/" \
         -e "s/\${CAPORT}/$3/" \
@@ -100,4 +109,16 @@ EOF
     . /hlf/fabric-ca/registerEnroll.sh
     createOrg ${ORG_ID} $(caPort "${ORG_ID}")
   "
+
+  # Create Connection Profile
+  PEER_PEM="${NFS_DIR}/organizations/peerOrganizations/org${ORG_ID}.example.com/tlsca/tlsca.org${ORG_ID}.example.com-cert.pem"
+  CA_PEM="${NFS_DIR}/organizations/peerOrganizations/org${ORG_ID}.example.com/ca/ca.org${ORG_ID}.example.com-cert.pem"
+
+  waitForFile "${PEER_PEM}"
+  waitForFile "${CA_PEM}"
+
+  mkdir -p "${OUT_DIR}/organizations/peerOrganizations/org${ORG_ID}.example.com"
+
+  echo "$(yaml_ccp ${ORG_ID} "$(peerPort ${ORG_ID})" "$(caPort ${ORG_ID})" "${PEER_PEM}" "${CA_PEM}")" > \
+    "${OUT_DIR}/organizations/peerOrganizations/org${ORG_ID}.example.com/connection-org${ORG_ID}.yaml"
 }
