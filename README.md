@@ -50,7 +50,7 @@ A lab environment to deploy **Hyperledger Fabric** to **Kubernetes** with **Exte
 - Download fabric binaries [[hyperledger-fabric-linux-amd64-2.2.0.tar.gz](https://github.com/hyperledger/fabric/releases/download/v2.2.0/hyperledger-fabric-linux-amd64-2.2.0.tar.gz)]
   - Unarchive it
   - Copy the `bin` directory to `HLF4Lab` directory
-    - Note: only `configtxgen` is required
+    - Note: only `configtxgen` & `configtxlator` is required
 - `./start-ca-servers.sh`
   - `wget -qO - --no-check-certificate https://ca.example.com/cainfo`
   - `wget -qO - --no-check-certificate https://ca.org1.example.com/cainfo`
@@ -58,8 +58,7 @@ A lab environment to deploy **Hyperledger Fabric** to **Kubernetes** with **Exte
 - `./start-network.sh`
 - `./start-ext-cc.sh [-nb]`
   - `-nb` - no build, just deploy already-built chaincode
-  - This step compiles the Go chain code, and it uses `https://proxy.golang.org` as Go proxy, defined in `.env`. If you
-    have trouble accessing this site, you can set other proxy such as `https://goproxy.io`.
+  - This step compiles and builds chaincode, and then uploads it to registry.
 - `./start-explorer.sh`
   - Deploy Hyperledger Explorer at [link](http://explorer.example.com)
   - User `admin`, and password `admin`

@@ -122,3 +122,41 @@ EOF
   echo "$(yaml_ccp ${ORG_ID} "$(peerPort ${ORG_ID})" "$(caPort ${ORG_ID})" "${PEER_PEM}" "${CA_PEM}")" > \
     "${OUT_DIR}/organizations/peerOrganizations/org${ORG_ID}.example.com/connection-org${ORG_ID}.yaml"
 }
+
+function installPeerByChart() {
+  ORG_ID=$1
+
+  helm install "peer0-org${ORG_ID}" helms/hlf-peer \
+    --set service.type="${SERVICE_TYPE}" \
+    --set service.port="$(peerPort "${ORG_ID}")" \
+    --set hlfPeer.nfs.path="${NFS_DIR}" \
+    --set hlfPeer.nfs.server="${NFS_SERVER}" \
+    -f - <<EOF
+hlfPeer:
+  config:
+    mspId: Org${ORG_ID}MSP
+    fqdn: peer0.org${ORG_ID}.example.com
+    cmpDir: organizations/peerOrganizations/org${ORG_ID}.example.com/peers/peer0.org${ORG_ID}.example.com
+    adminMspDir: organizations/peerOrganizations/org${ORG_ID}.example.com/users/Admin@org${ORG_ID}.example.com/msp
+  couchdb:
+    image: ${REG_URL}/couchdb:3.1.1
+
+image:
+  repository: ${REG_URL}/hyperledger/fabric-peer
+EOF
+
+  waitForChart "peer0-org${ORG_ID}"
+}
+
+function runInPeer() {
+  ORG_ID=$1
+  SCRIPT=$2
+
+  PEER0_ORG_POD="$(kubectl -n "${NAMESPACE}" get pod -l "app.kubernetes.io/instance=peer0-org${ORG_ID}" -o jsonpath="{.items[0].metadata.name}")"
+
+  kubectl -n "${NAMESPACE}" exec "${PEER0_ORG_POD}" -c "${PEER_CTR}"  -- sh -c "
+  export CORE_PEER_MSPCONFIGPATH=\${ADMIN_MSP_DIR}
+
+  ${SCRIPT}
+  "
+}

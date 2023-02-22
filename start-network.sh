@@ -45,55 +45,32 @@ for ORG_ID in 1 2; do
     -asOrg Org${ORG_ID}MSP
     echo "CreateAnchorPeer(Org${ORG_ID}MSP): $?"
 
-  helm install peer0-org${ORG_ID} helms/hlf-peer \
-    --set service.type="${SERVICE_TYPE}" \
-    --set service.port="$(peerPort ${ORG_ID})" \
-    --set hlfPeer.nfs.path="${NFS_DIR}" \
-    --set hlfPeer.nfs.server="${NFS_SERVER}" \
-    -f - <<EOF
-hlfPeer:
-  config:
-    mspId: Org${ORG_ID}MSP
-    fqdn: peer0.org${ORG_ID}.example.com
-    cmpDir: organizations/peerOrganizations/org${ORG_ID}.example.com/peers/peer0.org${ORG_ID}.example.com
-    adminMspDir: organizations/peerOrganizations/org${ORG_ID}.example.com/users/Admin@org${ORG_ID}.example.com/msp
-  couchdb:
-    image: ${REG_URL}/couchdb:3.1.1
-
-image:
-  repository: ${REG_URL}/hyperledger/fabric-peer
-EOF
-
-  waitForChart "peer0-org${ORG_ID}"
+  installPeerByChart ${ORG_ID}
   sleep 2
 
-  PEER0_ORG_POD="$(kubectl -n "${NAMESPACE}" get pod -l app.kubernetes.io/instance=peer0-org${ORG_ID} -o jsonpath="{.items[0].metadata.name}")"
-
-  kubectl -n "${NAMESPACE}" exec "${PEER0_ORG_POD}" -c "${PEER_CTR}"  -- sh -c "
-  export CORE_PEER_MSPCONFIGPATH=\${ADMIN_MSP_DIR}
-
+  runInPeer ${ORG_ID} "
   if [ '${ORG_ID}' == '1' ]; then
     peer channel create \
       -o ${ORDERER_URL} \
+      --tls --cafile ${ORDERER_CA} \
       -c ${CHANNEL_NAME} \
       -f /hlf/init/${CHANNEL_NAME}.tx \
-      --outputBlock /hlf/init/${CHANNEL_NAME}.block \
-      --tls --cafile ${ORDERER_CA}
-    echo \"*** Peer0.Org${ORG_ID} - Create: \$?\"
+      --outputBlock /hlf/init/${CHANNEL_NAME}.block
 
+    echo \"*** Peer0.Org${ORG_ID} - Create: \$?\"
     sleep 3
   fi
 
   peer channel join -b /hlf/init/${CHANNEL_NAME}.block
   echo \"*** Peer0.Org${ORG_ID} - Join: \$?\"
-
   sleep 3
 
   peer channel update \
     -o ${ORDERER_URL} \
+    --tls --cafile ${ORDERER_CA} \
     -c ${CHANNEL_NAME} \
-    -f /hlf/init/Org${ORG_ID}MSPAnchors.tx \
-    --tls --cafile ${ORDERER_CA}
+    -f /hlf/init/Org${ORG_ID}MSPAnchors.tx
+
   echo \"*** Peer0.Org${ORG_ID} - Update: \$?\"
   "
 done
