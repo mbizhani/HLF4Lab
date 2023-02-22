@@ -25,83 +25,75 @@ sudo bin/configtxgen \
   -channelID "${CHANNEL_NAME}"
 echo "CreateChannelTx: $?"
 
-for orgmsp in Org1MSP Org2MSP; do
+helm install orderer helms/hlf-orderer \
+  --set service.type="${SERVICE_TYPE}" \
+  --set service.port="${ORDERER_PORT}" \
+  --set image.repository="${REG_URL}/hyperledger/fabric-orderer" \
+  --set hlfOrd.nfs.path="${NFS_DIR}" \
+  --set hlfOrd.nfs.server="${NFS_SERVER}"
+waitForChart "orderer"
+
+sleep 2
+
+
+for ORG_ID in 1 2; do
   sudo bin/configtxgen \
     -configPath "${NFS_DIR}"/configtx \
     -profile TwoOrgsChannel \
-    -outputAnchorPeersUpdate "${INIT_DIR}/${orgmsp}anchors.tx" \
+    -outputAnchorPeersUpdate "${INIT_DIR}/Org${ORG_ID}MSPAnchors.tx" \
     -channelID "${CHANNEL_NAME}" \
-    -asOrg ${orgmsp}
-    echo "CreateAnchorPeer(${orgmsp}): $?"
+    -asOrg Org${ORG_ID}MSP
+    echo "CreateAnchorPeer(Org${ORG_ID}MSP): $?"
+
+  helm install peer0-org${ORG_ID} helms/hlf-peer \
+    --set service.type="${SERVICE_TYPE}" \
+    --set service.port="$(peerPort ${ORG_ID})" \
+    --set hlfPeer.nfs.path="${NFS_DIR}" \
+    --set hlfPeer.nfs.server="${NFS_SERVER}" \
+    -f - <<EOF
+hlfPeer:
+  config:
+    mspId: Org${ORG_ID}MSP
+    fqdn: peer0.org${ORG_ID}.example.com
+    cmpDir: organizations/peerOrganizations/org${ORG_ID}.example.com/peers/peer0.org${ORG_ID}.example.com
+    adminMspDir: organizations/peerOrganizations/org${ORG_ID}.example.com/users/Admin@org${ORG_ID}.example.com/msp
+  couchdb:
+    image: ${REG_URL}/couchdb:3.1.1
+
+image:
+  repository: ${REG_URL}/hyperledger/fabric-peer
+EOF
+
+  waitForChart "peer0-org${ORG_ID}"
+  sleep 2
+
+  PEER0_ORG_POD="$(kubectl -n "${NAMESPACE}" get pod -l app.kubernetes.io/instance=peer0-org${ORG_ID} -o jsonpath="{.items[0].metadata.name}")"
+
+  kubectl -n "${NAMESPACE}" exec "${PEER0_ORG_POD}" -c "${PEER_CTR}"  -- sh -c "
+  export CORE_PEER_MSPCONFIGPATH=\${ADMIN_MSP_DIR}
+
+  if [ '${ORG_ID}' == '1' ]; then
+    peer channel create \
+      -o ${ORDERER_URL} \
+      -c ${CHANNEL_NAME} \
+      -f /hlf/init/${CHANNEL_NAME}.tx \
+      --outputBlock /hlf/init/${CHANNEL_NAME}.block \
+      --tls --cafile ${ORDERER_CA}
+    echo \"*** Peer0.Org${ORG_ID} - Create: \$?\"
+
+    sleep 3
+  fi
+
+  peer channel join -b /hlf/init/${CHANNEL_NAME}.block
+  echo \"*** Peer0.Org${ORG_ID} - Join: \$?\"
+
+  sleep 3
+
+  peer channel update \
+    -o ${ORDERER_URL} \
+    -c ${CHANNEL_NAME} \
+    -f /hlf/init/Org${ORG_ID}MSPAnchors.tx \
+    --tls --cafile ${ORDERER_CA}
+  echo \"*** Peer0.Org${ORG_ID} - Update: \$?\"
+  "
 done
-
-helm install orderer helms/hlf-orderer \
-  -f values/orderer.yaml \
-  --set service.type="${SERVICE_TYPE}" \
-  --set service.port="${ORDERER_PORT}" \
-  --set hlfOrd.nfs.path="${NFS_DIR}" \
-  --set hlfOrd.nfs.server="${NFS_SERVER}"
-sleep 2
-helm install peer0-org1 helms/hlf-peer \
-  -f values/peer0-org1.yaml \
-  --set service.type="${SERVICE_TYPE}" \
-  --set service.port="$(peerPort 1)" \
-  --set hlfPeer.nfs.path="${NFS_DIR}" \
-  --set hlfPeer.nfs.server="${NFS_SERVER}"
-sleep 2
-helm install peer0-org2 helms/hlf-peer \
-  -f values/peer0-org2.yaml \
-  --set service.type="${SERVICE_TYPE}" \
-  --set service.port="$(peerPort 2)" \
-  --set hlfPeer.nfs.path="${NFS_DIR}" \
-  --set hlfPeer.nfs.server="${NFS_SERVER}"
-waitForChart "orderer"
-waitForChart "peer0-org1"
-waitForChart "peer0-org2"
-
-PEER0_ORG1_POD="$(kubectl -n "${NAMESPACE}" get pod -l app.kubernetes.io/instance=peer0-org1 -o jsonpath="{.items[0].metadata.name}")"
-PEER0_ORG2_POD="$(kubectl -n "${NAMESPACE}" get pod -l app.kubernetes.io/instance=peer0-org2 -o jsonpath="{.items[0].metadata.name}")"
-
-kubectl -n "${NAMESPACE}" exec "${PEER0_ORG1_POD}" -c "${PEER_CTR}"  -- sh -c "
-  export CORE_PEER_MSPCONFIGPATH=\${ADMIN_MSP_DIR}
-
-  peer channel create \
-    -o ${ORDERER_URL} \
-    -c ${CHANNEL_NAME} \
-    -f /hlf/init/${CHANNEL_NAME}.tx \
-    --outputBlock /hlf/init/${CHANNEL_NAME}.block \
-    --tls --cafile ${ORDERER_CA}
-  echo \"*** Peer0.Org1 - Create: \$?\"
-
-  sleep 3
-
-  peer channel join -b /hlf/init/${CHANNEL_NAME}.block
-  echo \"*** Peer0.Org1 - Join: \$?\"
-
-  sleep 3
-
-  peer channel update \
-    -o ${ORDERER_URL} \
-    -c ${CHANNEL_NAME} \
-    -f /hlf/init/Org1MSPanchors.tx \
-    --tls --cafile ${ORDERER_CA}
-  echo \"*** Peer0.Org1 - Update: \$?\"
-  "
-
-sleep 3
-
-kubectl -n "${NAMESPACE}" exec "${PEER0_ORG2_POD}" -c "${PEER_CTR}" -- sh -c "
-  export CORE_PEER_MSPCONFIGPATH=\${ADMIN_MSP_DIR}
-
-  peer channel join -b /hlf/init/${CHANNEL_NAME}.block
-  echo \"*** Peer0.Org2 - Join: \$?\"
-
-  sleep 3
-
-  peer channel update \
-    -o ${ORDERER_URL} \
-    -c ${CHANNEL_NAME} \
-    -f /hlf/init/Org2MSPanchors.tx \
-    --tls --cafile ${ORDERER_CA}
-  echo \"*** Peer0.Org2 - Update: \$?\"
-  "

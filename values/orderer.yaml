@@ -1,3 +1,0 @@
-service:
-  type: NodePort
-  port: 30100

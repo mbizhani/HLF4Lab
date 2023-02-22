@@ -3,9 +3,7 @@
 source .env
 source common.sh
 
-rm -rf "${OUT_DIR}" *.log
-sudo rm -rf "${NFS_DIR}"/*
-
+###
 ALL_CHARTS="$(helm list -q)"
 
 for CHART in ${ALL_CHARTS}; do
@@ -15,5 +13,9 @@ done
 for CHART in ${ALL_CHARTS}; do
   waitForNoChart "${CHART}"
 done
+
+###
+rm -rf "${OUT_DIR}" *.log
+sudo rm -rf "${NFS_DIR}"/*
 
 echo "*** FINISHED"
