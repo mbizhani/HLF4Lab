@@ -160,8 +160,11 @@ function runInPeer() {
   "
 }
 
-function fetchConfigBlock() {
-  local destFile=$1
+function fetchChannelConfigBlock() {
+  local destDir=$1
+  local configBlockPb=$2
+  local configBlockJson=$3
+  local configJson=$4
 
   runInPeer 1 "
     peer channel fetch config /hlf/config_block.pb \
@@ -171,6 +174,63 @@ function fetchConfigBlock() {
     "
 
   waitForFile "${NFS_DIR}"/config_block.pb
-  sudo mv "${NFS_DIR}"/config_block.pb "${destFile}"
-  sudo chown "$(id -u)":"$(id -g)" "${destFile}"
+  sudo mv "${NFS_DIR}"/config_block.pb "${destDir}/${configBlockPb}"
+  sudo chown "$(id -u)":"$(id -g)" "${destDir}/${configBlockPb}"
+
+  bin/configtxlator proto_decode \
+    --type common.Block \
+    --input  "${destDir}/${configBlockPb}" \
+    --output "${destDir}/${configBlockJson}"
+
+  jq \
+    .data.data[0].payload.data.config \
+    "${destDir}/${configBlockJson}" > "${destDir}/${configJson}"
+}
+
+function createUpdateConfigBlock() {
+  local destDir=$1
+  local config_json=$2
+  local modified_config_json=$3
+  local idx=$4
+
+  local modified_config_pb="$((idx + 0))-modified_config.pb"
+  local original_config_pb="$((idx + 1))-original_config.pb"
+  local config_update_pb="$((idx + 1))-config_update.pb"
+  local config_update_json="$((idx + 2))-config_update.json"
+  local config_update_in_envelope_json="$((idx + 3))-config_update_in_envelope.json"
+  local config_update_in_envelope_pb="$((idx + 4))-config_update_in_envelope.pb"
+
+  echo "--- Gen: $((idx + 0))"
+  bin/configtxlator proto_encode \
+    --type common.Config \
+    --input "${destDir}/${modified_config_json}" \
+    --output "${destDir}/${modified_config_pb}"
+
+  echo "--- Gen: $((idx + 1))"
+  bin/configtxlator proto_encode \
+    --type common.Config \
+    --input "${destDir}/${config_json}" \
+    --output "${destDir}/${original_config_pb}"
+
+  bin/configtxlator compute_update \
+    --channel_id "${CHANNEL_NAME}" \
+    --original "${destDir}/${original_config_pb}" \
+    --updated "${destDir}/${modified_config_pb}" \
+    --output "${destDir}/${config_update_pb}"
+
+  echo "--- Gen: $((idx + 2))"
+  bin/configtxlator proto_decode \
+    --type common.ConfigUpdate \
+    --input "${destDir}/${config_update_pb}" \
+    --output "${destDir}/${config_update_json}"
+
+  echo "--- Gen: $((idx + 3))"
+  echo '{"payload":{"header":{"channel_header":{"channel_id":"'${CHANNEL_NAME}'", "type":2}},"data":{"config_update":'$(cat "${destDir}/${config_update_json}")'}}}' | jq . > "${ADD_ORG_DIR}/${config_update_in_envelope_json}"
+
+  echo "--- Gen: $((idx + 4))"
+  bin/configtxlator proto_encode \
+    --type common.Envelope \
+   --input "${destDir}/${config_update_in_envelope_json}" \
+   --output "${destDir}/${config_update_in_envelope_pb}"
+
 }

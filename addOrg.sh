@@ -18,25 +18,12 @@ sudo cp -rf "${OUT_DIR}"/fabric-ca "${NFS_DIR}"
 
 installCA4Org ${ORG_ID}
 
-installPeerByChart ${ORG_ID}
-
 ###################
 ## Generate Config
 
 # --- fetchChannelConfig() START
-echo "--- Gen: 1"
-fetchConfigBlock "${ADD_ORG_DIR}/01-config_block.pb"
-
-echo "--- Gen: 2"
-bin/configtxlator proto_decode \
-  --type common.Block \
-  --input  "${ADD_ORG_DIR}"/01-config_block.pb \
-  --output "${ADD_ORG_DIR}"/02-config_block.json
-
-echo "--- Gen: 3"
-jq \
-  .data.data[0].payload.data.config \
-  "${ADD_ORG_DIR}"/02-config_block.json > "${ADD_ORG_DIR}"/03-config.json
+echo "--- Gen: 1 & 2 & 3"
+fetchChannelConfigBlock "${ADD_ORG_DIR}" "01-config_block.pb" "02-config_block.json" "03-config.json"
 # --- fetchChannelConfig() END
 
 echo "--- Gen: 4"
@@ -55,39 +42,7 @@ jq \
   "${ADD_ORG_DIR}"/04-org.json > "${ADD_ORG_DIR}"/05-modified_config.json
 
 # --- createConfigUpdate() START
-echo "--- Gen: 6"
-bin/configtxlator proto_encode \
-  --type common.Config \
-  --input "${ADD_ORG_DIR}"/05-modified_config.json \
-  --output "${ADD_ORG_DIR}"/06-modified_config.pb
-
-echo "--- Gen: 7"
-bin/configtxlator proto_encode \
-  --type common.Config \
-  --input "${ADD_ORG_DIR}"/03-config.json \
-  --output "${ADD_ORG_DIR}"/07-original_config.pb
-
-bin/configtxlator compute_update \
-  --channel_id "${CHANNEL_NAME}" \
-  --original "${ADD_ORG_DIR}"/07-original_config.pb \
-  --updated "${ADD_ORG_DIR}"/06-modified_config.pb \
-  --output "${ADD_ORG_DIR}"/07-config_update.pb
-
-echo "--- Gen: 8"
-bin/configtxlator proto_decode \
-  --type common.ConfigUpdate \
-  --input "${ADD_ORG_DIR}"/07-config_update.pb \
-  --output "${ADD_ORG_DIR}"/08-config_update.json
-
-echo "--- Gen: 9"
-echo '{"payload":{"header":{"channel_header":{"channel_id":"'${CHANNEL_NAME}'", "type":2}},"data":{"config_update":'$(cat "${ADD_ORG_DIR}"/08-config_update.json)'}}}' | jq . > "${ADD_ORG_DIR}"/09-config_update_in_envelope.json
-
-echo "--- Gen: 10"
-bin/configtxlator proto_encode \
-  --type common.Envelope \
- --input "${ADD_ORG_DIR}"/09-config_update_in_envelope.json \
- --output "${ADD_ORG_DIR}"/10-config_update_in_envelope.pb
-
+createUpdateConfigBlock "${ADD_ORG_DIR}" "03-config.json" "05-modified_config.json" 6
 # --- createConfigUpdate() END
 
 sleep 1
@@ -100,19 +55,23 @@ runInPeer 1 "
 "
 # --- signConfigtxAsPeerOrg END
 
+# updateChannelConfig.sh
 runInPeer 2 "
   peer channel update \
     -o ${ORDERER_URL} \
     --tls --cafile ${ORDERER_CA} \
     -c ${CHANNEL_NAME} \
     -f /hlf/add-org${ORG_ID}/10-config_update_in_envelope.pb
-"
+  "
 
 sleep 2
 
 ################
 ## Join Channel
 
+installPeerByChart ${ORG_ID}
+
+# joinChannel.sh & joinChannel()
 runInPeer ${ORG_ID} "
   mv /hlf/init/${CHANNEL_NAME}.block /hlf/init/B4_${ORG_ID}_${CHANNEL_NAME}.block
 
@@ -126,4 +85,29 @@ runInPeer ${ORG_ID} "
   peer channel join -b /hlf/init/${CHANNEL_NAME}.block
   echo \"*** Peer0.Org${ORG_ID} - Join: \$?\"
   sleep 3
-"
+  "
+
+# --- createAnchorPeerUpdate() START
+echo "--- Gen: 11 & 12 & 13"
+fetchChannelConfigBlock "${ADD_ORG_DIR}" "11-config_block.pb" "12-config_block.json" "13-config.json"
+
+echo "--- Gen: 14"
+CORE_PEER_LOCALMSPID="Org${ORG_ID}MSP"
+HOST="peer0.org${ORG_ID}.example.com"
+PORT="$(peerPort "${ORG_ID}")"
+jq '.channel_group.groups.Application.groups.'${CORE_PEER_LOCALMSPID}'.values += {"AnchorPeers":{"mod_policy": "Admins","value":{"anchor_peers": [{"host": "'${HOST}'","port": '${PORT}'}]},"version": "0"}}' \
+  "${ADD_ORG_DIR}"/13-config.json > "${ADD_ORG_DIR}"/14-modified_config.json
+
+createUpdateConfigBlock "${ADD_ORG_DIR}" "13-config.json" "14-modified_config.json" 15
+# --- createAnchorPeerUpdate() END
+
+sleep 2
+sudo cp -rf "${ADD_ORG_DIR}" "${NFS_DIR}"/
+
+runInPeer ${ORG_ID} "
+  peer channel update \
+    -o ${ORDERER_URL} \
+    --tls --cafile ${ORDERER_CA} \
+    -c ${CHANNEL_NAME} \
+    -f /hlf/add-org${ORG_ID}/19-config_update_in_envelope.pb
+  "
