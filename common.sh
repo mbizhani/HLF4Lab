@@ -21,36 +21,36 @@ export HELM_NAMESPACE=${NAMESPACE}
 ##
 
 function caPort() {
-    orgId="${1}"
+    local orgId="${1}"
     echo "$(( CA_BASE_PORT + orgId ))"
 }
 
 function peerPort() {
-    orgId="${1}"
+    local orgId="${1}"
     echo "$(( PEER_BASE_PORT + orgId ))"
 }
 
 ##
 
 function waitForChart() {
-  CHART=$1
-  while [ "$(kubectl -n "${NAMESPACE}" get pod -l app.kubernetes.io/instance="${CHART}" | wc -l )" == "0" ] ||
-        [ "$(kubectl -n "${NAMESPACE}" get pod -l app.kubernetes.io/instance="${CHART}" -o jsonpath="{.items[0].status.phase}")" != "Running" ]; do
-    echo "Waiting for ${CHART} ..."
+  local chart=$1
+  while [ "$(kubectl -n "${NAMESPACE}" get pod -l app.kubernetes.io/instance="${chart}" | wc -l )" == "0" ] ||
+        [ "$(kubectl -n "${NAMESPACE}" get pod -l app.kubernetes.io/instance="${chart}" -o jsonpath="{.items[0].status.phase}")" != "Running" ]; do
+    echo "Waiting for ${chart} ..."
     sleep 2
   done
 }
 
 function waitForNoChart() {
-  CHART=$1
-  while [ "$(kubectl -n "${NAMESPACE}" get pod -l app.kubernetes.io/instance="${CHART}" | wc -l )" == "2" ]; do
-    echo "Waiting for no ${CHART} ..."
+  local chart=$1
+  while [ "$(kubectl -n "${NAMESPACE}" get pod -l app.kubernetes.io/instance="${chart}" | wc -l )" == "2" ]; do
+    echo "Waiting for no ${chart} ..."
     sleep 3
   done
 }
 
 function waitForFile() {
-  FILE=$1
+  local FILE=$1
 
   while [ ! -f "${FILE}" ]; do
     echo "Waiting for file ${FILE} ..."
@@ -78,66 +78,66 @@ function yaml_ccp {
 ##
 
 function installCA4Org() {
-  ORG_ID="${1}"
+  local orgId="${1}"
 
-  helm install ca-org"${ORG_ID}" helms/hlf-ca \
+  helm install ca-org"${orgId}" helms/hlf-ca \
     --set service.type="${SERVICE_TYPE}" \
-    --set service.port="$(caPort "${ORG_ID}")" \
+    --set service.port="$(caPort "${orgId}")" \
     --set hlfCa.nfs.path="${NFS_DIR}" \
     --set hlfCa.nfs.server="${NFS_SERVER}" \
     -f - <<EOF
 hlfCa:
   config:
-    serverConfigDir: fabric-ca/org${ORG_ID}
+    serverConfigDir: fabric-ca/org${orgId}
 image:
   repository: ${REG_URL}/hyperledger/fabric-ca
 ingress:
   enabled: true
   hosts:
-    - host: ca.org${ORG_ID}.example.com
+    - host: ca.org${orgId}.example.com
       paths:
         - path: /
           pathType: ImplementationSpecific
 EOF
 
-  waitForChart "ca-org${ORG_ID}"
+  waitForChart "ca-org${orgId}"
 
   sleep 2
 
-  CA_ORG_POD="$(kubectl -n "${NAMESPACE}" get pod -l app.kubernetes.io/instance=ca-org"${ORG_ID}" -o jsonpath="{.items[0].metadata.name}")"
+  local CA_ORG_POD="$(kubectl -n "${NAMESPACE}" get pod -l app.kubernetes.io/instance=ca-org"${orgId}" -o jsonpath="{.items[0].metadata.name}")"
   kubectl -n "${NAMESPACE}" exec "${CA_ORG_POD}" -- sh -c "
     . /hlf/fabric-ca/registerEnroll.sh
-    createOrg ${ORG_ID} $(caPort "${ORG_ID}")
+    createOrg ${orgId} $(caPort "${orgId}")
   "
 
   # Create Connection Profile
-  PEER_PEM="${NFS_DIR}/organizations/peerOrganizations/org${ORG_ID}.example.com/tlsca/tlsca.org${ORG_ID}.example.com-cert.pem"
-  CA_PEM="${NFS_DIR}/organizations/peerOrganizations/org${ORG_ID}.example.com/ca/ca.org${ORG_ID}.example.com-cert.pem"
+  local PEER_PEM="${NFS_DIR}/organizations/peerOrganizations/org${orgId}.example.com/tlsca/tlsca.org${orgId}.example.com-cert.pem"
+  local CA_PEM="${NFS_DIR}/organizations/peerOrganizations/org${orgId}.example.com/ca/ca.org${orgId}.example.com-cert.pem"
 
   waitForFile "${PEER_PEM}"
   waitForFile "${CA_PEM}"
 
-  mkdir -p "${OUT_DIR}/organizations/peerOrganizations/org${ORG_ID}.example.com"
+  mkdir -p "${OUT_DIR}/organizations/peerOrganizations/org${orgId}.example.com"
 
-  echo "$(yaml_ccp ${ORG_ID} "$(peerPort ${ORG_ID})" "$(caPort ${ORG_ID})" "${PEER_PEM}" "${CA_PEM}")" > \
-    "${OUT_DIR}/organizations/peerOrganizations/org${ORG_ID}.example.com/connection-org${ORG_ID}.yaml"
+  echo "$(yaml_ccp ${orgId} "$(peerPort ${orgId})" "$(caPort ${orgId})" "${PEER_PEM}" "${CA_PEM}")" > \
+    "${OUT_DIR}/organizations/peerOrganizations/org${orgId}.example.com/connection-org${orgId}.yaml"
 }
 
 function installPeerByChart() {
-  ORG_ID=$1
+  local orgId=$1
 
-  helm install "peer0-org${ORG_ID}" helms/hlf-peer \
+  helm install "peer0-org${orgId}" helms/hlf-peer \
     --set service.type="${SERVICE_TYPE}" \
-    --set service.port="$(peerPort "${ORG_ID}")" \
+    --set service.port="$(peerPort "${orgId}")" \
     --set hlfPeer.nfs.path="${NFS_DIR}" \
     --set hlfPeer.nfs.server="${NFS_SERVER}" \
     -f - <<EOF
 hlfPeer:
   config:
-    mspId: Org${ORG_ID}MSP
-    fqdn: peer0.org${ORG_ID}.example.com
-    cmpDir: organizations/peerOrganizations/org${ORG_ID}.example.com/peers/peer0.org${ORG_ID}.example.com
-    adminMspDir: organizations/peerOrganizations/org${ORG_ID}.example.com/users/Admin@org${ORG_ID}.example.com/msp
+    mspId: Org${orgId}MSP
+    fqdn: peer0.org${orgId}.example.com
+    cmpDir: organizations/peerOrganizations/org${orgId}.example.com/peers/peer0.org${orgId}.example.com
+    adminMspDir: organizations/peerOrganizations/org${orgId}.example.com/users/Admin@org${orgId}.example.com/msp
   couchdb:
     image: ${REG_URL}/couchdb:3.1.1
 
@@ -145,18 +145,32 @@ image:
   repository: ${REG_URL}/hyperledger/fabric-peer
 EOF
 
-  waitForChart "peer0-org${ORG_ID}"
+  waitForChart "peer0-org${orgId}"
 }
 
 function runInPeer() {
-  ORG_ID=$1
-  SCRIPT=$2
-
-  PEER0_ORG_POD="$(kubectl -n "${NAMESPACE}" get pod -l "app.kubernetes.io/instance=peer0-org${ORG_ID}" -o jsonpath="{.items[0].metadata.name}")"
+  local orgId=$1
+  local SCRIPT=$2
+  local PEER0_ORG_POD="$(kubectl -n "${NAMESPACE}" get pod -l "app.kubernetes.io/instance=peer0-org${orgId}" -o jsonpath="{.items[0].metadata.name}")"
 
   kubectl -n "${NAMESPACE}" exec "${PEER0_ORG_POD}" -c "${PEER_CTR}"  -- sh -c "
   export CORE_PEER_MSPCONFIGPATH=\${ADMIN_MSP_DIR}
 
   ${SCRIPT}
   "
+}
+
+function fetchConfigBlock() {
+  local destFile=$1
+
+  runInPeer 1 "
+    peer channel fetch config /hlf/config_block.pb \
+      -o ${ORDERER_URL} \
+      --tls --cafile ${ORDERER_CA} \
+      -c ${CHANNEL_NAME}
+    "
+
+  waitForFile "${NFS_DIR}"/config_block.pb
+  sudo mv "${NFS_DIR}"/config_block.pb "${destFile}"
+  sudo chown "$(id -u)":"$(id -g)" "${destFile}"
 }
