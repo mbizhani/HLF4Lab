@@ -111,3 +111,9 @@ runInPeer ${ORG_ID} "
     -c ${CHANNEL_NAME} \
     -f /hlf/add-org${ORG_ID}/19-config_update_in_envelope.pb
   "
+sleep 3
+
+installCC ${ORG_ID}
+sleep 3
+
+approveCCForOrg ${ORG_ID}

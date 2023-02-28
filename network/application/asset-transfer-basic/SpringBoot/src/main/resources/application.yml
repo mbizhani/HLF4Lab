@@ -1,14 +1,68 @@
+spring:
+  profiles:
+    active: org1
+  application:
+    name: asset-transfer-app
+
 thallo:
   fabric:
     gateway:
       chaincode: basic
       channel: mychannel
+
+---
+spring:
+  config:
+    activate:
+      on-profile: org1
+
+thallo:
+  fabric:
+    gateway:
       connection-profile-file: OUT/organizations/peerOrganizations/org1.example.com/connection-org1.yaml
       org-msp-id: Org1MSP
       ca:
-        wallet-dir: OUT/wallet
+        wallet-dir: OUT/wallet1
         server:
           pem-file: OUT/ca/ca.org1.example.com-cert.pem
           url: https://ca.org1.example.com:30101
+          username: backend
+          password: backendPw
+
+---
+spring:
+  config:
+    activate:
+      on-profile: org2
+
+thallo:
+  fabric:
+    gateway:
+      connection-profile-file: OUT/organizations/peerOrganizations/org2.example.com/connection-org2.yaml
+      org-msp-id: Org2MSP
+      ca:
+        wallet-dir: OUT/wallet2
+        server:
+          pem-file: OUT/ca/ca.org2.example.com-cert.pem
+          url: https://ca.org2.example.com:30102
+          username: backend
+          password: backendPw
+
+---
+spring:
+  config:
+    activate:
+      on-profile: org3
+
+thallo:
+  fabric:
+    gateway:
+      connection-profile-file: OUT/organizations/peerOrganizations/org3.example.com/connection-org3.yaml
+      org-msp-id: Org3MSP
+      ca:
+        wallet-dir: OUT/wallet3
+        server:
+          pem-file: OUT/ca/ca.org3.example.com-cert.pem
+          url: https://ca.org3.example.com:30103
           username: backend
           password: backendPw

@@ -119,8 +119,12 @@ EOF
 
   mkdir -p "${OUT_DIR}/organizations/peerOrganizations/org${orgId}.example.com"
 
-  echo "$(yaml_ccp ${orgId} "$(peerPort ${orgId})" "$(caPort ${orgId})" "${PEER_PEM}" "${CA_PEM}")" > \
+  echo "$(yaml_ccp "${orgId}" "$(peerPort ${orgId})" "$(caPort ${orgId})" "${PEER_PEM}" "${CA_PEM}")" > \
     "${OUT_DIR}/organizations/peerOrganizations/org${orgId}.example.com/connection-org${orgId}.yaml"
+
+  ## copy CA's pem for application to create 'wallet'
+  mkdir -p "${OUT_DIR}/ca"
+  cp "${NFS_DIR}"/organizations/peerOrganizations/org"${orgId}".example.com/ca/*.pem "${OUT_DIR}"/ca
 }
 
 function installPeerByChart() {
@@ -159,6 +163,56 @@ function runInPeer() {
   ${SCRIPT}
   "
 }
+
+##############
+## CC Methods
+
+function getPackageId() {
+  if [ ! -f ${OUT_DIR}/chaincode.log ]; then
+    runInPeer 1 "
+      peer lifecycle chaincode queryinstalled
+    " > ${OUT_DIR}/chaincode.log
+  fi
+
+  local packageId="$(sed -n "/${CC_NAME}_${CC_VERSION}/{s/^Package ID: //; s/, Label:.*$//; p;}" ${OUT_DIR}/chaincode.log)"
+  if [ ! "${packageId}" ]; then
+    echo "ERROR: no PACKAGE_ID"
+    exit 1
+  fi
+  echo "${packageId}"
+}
+
+function installCC() {
+  local orgId=$1
+
+  runInPeer "${orgId}" "
+    peer lifecycle chaincode \
+      install /hlf/chaincode/${CC_NAME}.tar.gz
+    echo \"Install for org ${orgId}: \$?\"
+   "
+}
+
+# TIP: if `--init-required` is set for `approveformyorg` & `commit`, then `--isInit` is required for `invoke`
+function approveCCForOrg() {
+  local orgId=$1
+  local packageId="$(getPackageId)"
+
+  runInPeer "${orgId}" "
+    peer lifecycle chaincode approveformyorg \
+      -o ${ORDERER_URL} \
+      --tls --cafile ${ORDERER_CA} \
+      --channelID ${CHANNEL_NAME} \
+      --name ${CC_NAME} \
+      --version ${CC_VERSION} \
+      --package-id ${packageId} \
+      --sequence ${CC_SEQUENCE}
+
+    echo \"Approve for Org ${orgId}: \$?\"
+  "
+}
+
+#################
+## Alter Network
 
 function fetchChannelConfigBlock() {
   local destDir=$1

@@ -1,41 +1,14 @@
 #!/bin/bash
 
-function installCC() {
-  PEER_POD=$1
-  kubectl -n ${NAMESPACE} exec "${PEER_POD}" -c "${PEER_CTR}" -- sh -c "
-    export CORE_PEER_MSPCONFIGPATH=\${ADMIN_MSP_DIR}
+source .env
+source common.sh
 
-    peer lifecycle chaincode \
-      install /hlf/chaincode/${CC_NAME}.tar.gz
-    echo \"Install: \$?\"
-   "
-}
-
-# TIP: if `--init-required` is set for `approveformyorg` & `commit`, then `--isInit` is required for `invoke`
-
-function approveForMyOrg() {
-  PEER_POD=$1
-  kubectl -n ${NAMESPACE} exec "${PEER_POD}" -c "${PEER_CTR}" -- sh -c "
-    export CORE_PEER_MSPCONFIGPATH=\${ADMIN_MSP_DIR}
-
-    peer lifecycle chaincode approveformyorg \
-      -o ${ORDERER_URL} \
-      --tls --cafile ${ORDERER_CA} \
-      --channelID ${CHANNEL_NAME} \
-      --name ${CC_NAME} \
-      --version ${CC_VERSION} \
-      --package-id ${PACKAGE_ID} \
-      --sequence ${CC_SEQUENCE}
-
-    echo \"Approve for My Org: \$?\"
-    "
-}
+##############################
 
 function commitCC() {
-  PEER_POD=$1
-  kubectl -n ${NAMESPACE} exec "${PEER_POD}" -c "${PEER_CTR}" -- sh -c "
-    export CORE_PEER_MSPCONFIGPATH=\${ADMIN_MSP_DIR}
+  local orgId=$1
 
+  runInPeer "${orgId}" "
     peer lifecycle chaincode commit \
       -o ${ORDERER_URL} \
       --tls --cafile ${ORDERER_CA} \
@@ -90,12 +63,10 @@ function commitCC() {
 #}
 
 function invokeInitCC() {
-  PEER_POD="$1"
+  local orgId="$1"
   FCN_CALL='{"function":"'${CC_INIT_FCN}'","Args":[]}'
 
-  kubectl -n ${NAMESPACE} exec "${PEER_POD}" -c "${PEER_CTR}" -- sh -c "
-    export CORE_PEER_MSPCONFIGPATH=\${ADMIN_MSP_DIR}
-
+  runInPeer "${orgId}" "
     peer chaincode invoke \
       -o ${ORDERER_URL} \
       --tls --cafile ${ORDERER_CA} \
@@ -113,9 +84,6 @@ function invokeInitCC() {
 
 ##############################
 
-source .env
-source common.sh
-
 if [ "$1" != "-nb" ]; then
   pushd network/chaincode/asset-transfer-basic/SpringBoot
   docker rmi "${CC_DOCKER_IMAGE}:${CC_DOCKER_TAG}" || true
@@ -132,9 +100,9 @@ fi
 
 # TIP: https://stackoverflow.com/questions/68670102/hyperledger-fabric-external-chaincode-with-tls-from-fabric-ca
 if [ "${CC_TLS_ENABLED}" == "true" ]; then
-  ROOTCA_CRT="$(sudo awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}' ${NFS_DIR}/organizations/ordererOrganizations/example.com/chaincode/tls/ca.crt)"
-  CLIENT_KEY="$(sudo awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}' ${NFS_DIR}/organizations/ordererOrganizations/example.com/chaincode/msp/server.key)"
-  CLIENT_CRT="$(sudo awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}' ${NFS_DIR}/organizations/ordererOrganizations/example.com/chaincode/msp/server.crt)"
+  ROOTCA_CRT="$(sudo awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}' "${NFS_DIR}"/organizations/ordererOrganizations/example.com/chaincode/tls/ca.crt)"
+  CLIENT_KEY="$(sudo awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}' "${NFS_DIR}"/organizations/ordererOrganizations/example.com/chaincode/msp/server.key)"
+  CLIENT_CRT="$(sudo awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}' "${NFS_DIR}"/organizations/ordererOrganizations/example.com/chaincode/msp/server.crt)"
 
   cat > "${OUT_DIR}"/connection.json << EOF
 {
@@ -171,30 +139,14 @@ popd
 sudo mkdir -p "${NFS_DIR}"/chaincode
 sudo cp -rf "${OUT_DIR}"/"${CC_NAME}".tar.gz "${NFS_DIR}"/chaincode
 
-PEER0_ORG1_POD="$(kubectl -n ${NAMESPACE} get pod -l app.kubernetes.io/instance=peer0-org1 -o jsonpath="{.items[0].metadata.name}")"
-PEER0_ORG2_POD="$(kubectl -n ${NAMESPACE} get pod -l app.kubernetes.io/instance=peer0-org2 -o jsonpath="{.items[0].metadata.name}")"
-
-installCC "${PEER0_ORG1_POD}"
-installCC "${PEER0_ORG2_POD}"
-
-kubectl -n ${NAMESPACE} exec "${PEER0_ORG1_POD}" -c "${PEER_CTR}" -- sh -c "
-  export CORE_PEER_MSPCONFIGPATH=\${ADMIN_MSP_DIR}
-
-  peer lifecycle chaincode queryinstalled
-" >&chaincode.log
-cat chaincode.log
-PACKAGE_ID=$(sed -n "/${CC_NAME}_${CC_VERSION}/{s/^Package ID: //; s/, Label:.*$//; p;}" chaincode.log)
-echo "PACKAGE_ID = ${PACKAGE_ID}"
-if [ ! "${PACKAGE_ID}" ]; then
-  echo "ERROR: no PACKAGE_ID"
-  exit 1
-fi
+installCC 1
+installCC 2
 
 helm install basic helms/hlf-cc \
   --set image.repository="${CC_DOCKER_IMAGE}" \
   --set image.tag="${CC_DOCKER_TAG}" \
   --set image.pullPolicy="Always" \
-  --set hlfCc.id="${PACKAGE_ID}" \
+  --set hlfCc.id="$(getPackageId)" \
   --set hlfCc.address="0.0.0.0:${CC_APP_PORT}" \
   --set hlfCc.host="${CC_APP_HOST}" \
   --set hlfCc.nfs.path="${NFS_DIR}" \
@@ -202,18 +154,17 @@ helm install basic helms/hlf-cc \
   --set hlfCc.tls.enabled="${CC_TLS_ENABLED}"
 waitForChart "basic"
 
-approveForMyOrg "${PEER0_ORG1_POD}"
-approveForMyOrg "${PEER0_ORG2_POD}"
+approveCCForOrg 1
+approveCCForOrg 2
 
-commitCC "${PEER0_ORG1_POD}"
-
+commitCC 1
 sleep 5
 
 if [ "${CC_INIT_FCN}" ]; then
-  invokeInitCC "${PEER0_ORG2_POD}"
+  invokeInitCC 2
   sleep 2
   echo "----------------"
   echo " Chaincode Logs"
   echo "----------------"
-  kubectl -n ${NAMESPACE} logs -l app.kubernetes.io/instance=basic
+  kubectl -n "${NAMESPACE}" logs -l app.kubernetes.io/instance=basic
 fi

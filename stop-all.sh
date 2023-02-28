@@ -15,7 +15,7 @@ for CHART in ${ALL_CHARTS}; do
 done
 
 ###
-rm -rf "${OUT_DIR}" *.log
+rm -rf "${OUT_DIR}"
 sudo rm -rf "${NFS_DIR}"/*
 
 echo "*** FINISHED"
