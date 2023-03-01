@@ -211,6 +211,26 @@ function approveCCForOrg() {
   "
 }
 
+function queryCC() {
+  local orgId="$1"
+  local method="$2"
+  local callJson='{"function":"'${method}'","Args":[]}'
+
+  runInPeer "${orgId}" "
+    peer chaincode query \
+      -o ${ORDERER_URL} \
+      --tls --cafile ${ORDERER_CA} \
+      --channelID ${CHANNEL_NAME} \
+      --name ${CC_NAME} \
+      --peerAddresses peer0.org${orgId}.example.com:$(peerPort "${orgId}") \
+      --tlsRootCertFiles /hlf/organizations/peerOrganizations/org${orgId}.example.com/peers/peer0.org${orgId}.example.com/tls/ca.crt \
+      -c '${callJson}'
+
+    echo \"Query CC: \$?\"
+  "
+}
+
+
 #################
 ## Alter Network
 

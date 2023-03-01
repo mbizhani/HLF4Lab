@@ -19,7 +19,7 @@ Organizations:
         Name: Org${ORG_ID}MSP
 
         # ID to load the MSP definition as
-        ID: Org3MSP
+        ID: Org${ORG_ID}MSP
 
         MSPDir: ${NFS_DIR}/organizations/peerOrganizations/org${ORG_ID}.example.com/msp
 

@@ -66,3 +66,22 @@ thallo:
           url: https://ca.org3.example.com:30103
           username: backend
           password: backendPw
+
+---
+spring:
+  config:
+    activate:
+      on-profile: org4
+
+thallo:
+  fabric:
+    gateway:
+      connection-profile-file: OUT/organizations/peerOrganizations/org4.example.com/connection-org4.yaml
+      org-msp-id: Org4MSP
+      ca:
+        wallet-dir: OUT/wallet4
+        server:
+          pem-file: OUT/ca/ca.org4.example.com-cert.pem
+          url: https://ca.org4.example.com:30104
+          username: backend
+          password: backendPw
