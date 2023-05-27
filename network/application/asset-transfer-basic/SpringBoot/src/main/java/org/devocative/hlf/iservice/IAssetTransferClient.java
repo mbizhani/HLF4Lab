@@ -9,13 +9,13 @@ import java.util.List;
 
 @FabricClient
 public interface IAssetTransferClient {
-	@Evaluate(returnAsString = true)
+	@Evaluate
 	AssetDTO readAsset(String id);
 
 	@Evaluate
 	boolean assetExists(String id);
 
-	@Evaluate(returnAsString = true)
+	@Evaluate
 	List<AssetDTO> getAllAssets();
 
 	@Submit
