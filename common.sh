@@ -58,6 +58,15 @@ function waitForFile() {
   done
 }
 
+function out2nfs() {
+    kubectl cp -n "${NAMESPACE}" "${OUT_DIR}/$1" busybox:/hlf
+}
+
+function nfs2out() {
+  mkdir -p "${OUT_DIR}/$1"
+  kubectl cp -n "${NAMESPACE}" busybox:/hlf/"$1" "${OUT_DIR}/$1"
+}
+
 ##
 
 function one_line_pem {
@@ -110,21 +119,21 @@ EOF
     createOrg ${orgId} $(caPort "${orgId}")
   "
 
+  nfs2out organizations
+
   # Create Connection Profile
-  local PEER_PEM="${NFS_DIR}/organizations/peerOrganizations/org${orgId}.example.com/tlsca/tlsca.org${orgId}.example.com-cert.pem"
-  local CA_PEM="${NFS_DIR}/organizations/peerOrganizations/org${orgId}.example.com/ca/ca.org${orgId}.example.com-cert.pem"
+  local PEER_PEM="${OUT_DIR}/organizations/peerOrganizations/org${orgId}.example.com/tlsca/tlsca.org${orgId}.example.com-cert.pem"
+  local CA_PEM="${OUT_DIR}/organizations/peerOrganizations/org${orgId}.example.com/ca/ca.org${orgId}.example.com-cert.pem"
 
   waitForFile "${PEER_PEM}"
   waitForFile "${CA_PEM}"
-
-  mkdir -p "${OUT_DIR}/organizations/peerOrganizations/org${orgId}.example.com"
 
   echo "$(yaml_ccp "${orgId}" "$(peerPort ${orgId})" "$(caPort ${orgId})" "${PEER_PEM}" "${CA_PEM}")" > \
     "${OUT_DIR}/organizations/peerOrganizations/org${orgId}.example.com/connection-org${orgId}.yaml"
 
   ## copy CA's pem for application to create 'wallet'
   mkdir -p "${OUT_DIR}/ca"
-  cp "${NFS_DIR}"/organizations/peerOrganizations/org"${orgId}".example.com/ca/*.pem "${OUT_DIR}"/ca
+  cp "${OUT_DIR}"/organizations/peerOrganizations/org"${orgId}".example.com/ca/*.pem "${OUT_DIR}"/ca
 }
 
 function installPeerByChart() {

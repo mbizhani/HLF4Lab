@@ -3,28 +3,41 @@
 source .env
 source common.sh
 
-INIT_DIR=${NFS_DIR}/init
-sudo mkdir -p "${INIT_DIR}"
+INIT_DIR=${OUT_DIR}/init
+mkdir -p "${INIT_DIR}"
 
-sudo mkdir -p "${NFS_DIR}"/configtx
+mkdir -p "${OUT_DIR}"/configtx
 eval "cat <<EOF
 $(<network/configtx/configtx.yaml)
-EOF" | sudo tee "${NFS_DIR}"/configtx/configtx.yaml
+EOF" > "${OUT_DIR}"/configtx/configtx.yaml
 
-sudo bin/configtxgen \
-  -configPath "${NFS_DIR}"/configtx \
+bin/configtxgen \
+  -configPath "${OUT_DIR}"/configtx \
   -profile TwoOrgsOrdererGenesis \
   -channelID system-channel \
   -outputBlock "${INIT_DIR}/genesis.block"
 echo "GenesisBlock: $?"
 
-sudo bin/configtxgen \
-  -configPath "${NFS_DIR}"/configtx \
+bin/configtxgen \
+  -configPath "${OUT_DIR}"/configtx \
   -profile TwoOrgsChannel \
-  -outputCreateChannelTx "${INIT_DIR}/${CHANNEL_NAME}.tx" \
-  -channelID "${CHANNEL_NAME}"
+  -channelID "${CHANNEL_NAME}" \
+  -outputCreateChannelTx "${INIT_DIR}/${CHANNEL_NAME}.tx"
 echo "CreateChannelTx: $?"
 
+for ORG_ID in 1 2; do
+  bin/configtxgen \
+    -configPath "${OUT_DIR}"/configtx \
+    -profile TwoOrgsChannel \
+    -channelID "${CHANNEL_NAME}" \
+    -asOrg Org${ORG_ID}MSP \
+    -outputAnchorPeersUpdate "${INIT_DIR}/Org${ORG_ID}MSPAnchors.tx"
+    echo "CreateAnchorPeer(Org${ORG_ID}MSP): $?"
+done
+
+out2nfs init
+
+## START ORDERER
 helm install orderer helms/hlf-orderer \
   --set service.type="${SERVICE_TYPE}" \
   --set service.port="${ORDERER_PORT}" \
@@ -35,16 +48,8 @@ waitForChart "orderer"
 
 sleep 2
 
-
+## START PEERS
 for ORG_ID in 1 2; do
-  sudo bin/configtxgen \
-    -configPath "${NFS_DIR}"/configtx \
-    -profile TwoOrgsChannel \
-    -outputAnchorPeersUpdate "${INIT_DIR}/Org${ORG_ID}MSPAnchors.tx" \
-    -channelID "${CHANNEL_NAME}" \
-    -asOrg Org${ORG_ID}MSP
-    echo "CreateAnchorPeer(Org${ORG_ID}MSP): $?"
-
   installPeerByChart ${ORG_ID}
   sleep 2
 

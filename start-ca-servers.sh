@@ -3,6 +3,13 @@
 source .env
 source common.sh
 
+eval "cat <<EOF
+$(<network/k8s/busybox.yml)
+EOF" > "${OUT_DIR}"/busybox.yml
+kubectl apply -f "${OUT_DIR}"/busybox.yml
+waitForChart busybox
+
+
 cp -rf network/organizations/fabric-ca "${OUT_DIR}"
 for ORG_ID in 1 2; do
   mkdir -p "${OUT_DIR}"/fabric-ca/org${ORG_ID}
@@ -11,7 +18,7 @@ $(<network/organizations/fabric-ca-server-config-ORG.yaml)
 EOF" > "${OUT_DIR}"/fabric-ca/org${ORG_ID}/fabric-ca-server-config.yaml
 done
 
-sudo cp -rf "${OUT_DIR}"/fabric-ca "${NFS_DIR}"
+out2nfs fabric-ca
 
 ##############
 # ORDERER  CA

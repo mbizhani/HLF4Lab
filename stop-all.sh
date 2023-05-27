@@ -14,8 +14,8 @@ for CHART in ${ALL_CHARTS}; do
   waitForNoChart "${CHART}"
 done
 
+kubectl delete pod -n "${NAMESPACE}" --force=true busybox
 ###
 rm -rf "${OUT_DIR}"
-sudo rm -rf "${NFS_DIR}"/*
 
 echo "*** FINISHED"
