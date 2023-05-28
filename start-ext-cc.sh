@@ -98,13 +98,14 @@ else
   echo "No Build for Chaincode, Use Current Image!"
 fi
 
+mkdir -p "${OUT_DIR}"/chaincode
 # TIP: https://stackoverflow.com/questions/68670102/hyperledger-fabric-external-chaincode-with-tls-from-fabric-ca
 if [ "${CC_TLS_ENABLED}" == "true" ]; then
-  ROOTCA_CRT="$(sudo awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}' "${NFS_DIR}"/organizations/ordererOrganizations/example.com/chaincode/tls/ca.crt)"
-  CLIENT_KEY="$(sudo awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}' "${NFS_DIR}"/organizations/ordererOrganizations/example.com/chaincode/msp/server.key)"
-  CLIENT_CRT="$(sudo awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}' "${NFS_DIR}"/organizations/ordererOrganizations/example.com/chaincode/msp/server.crt)"
+  ROOTCA_CRT="$(awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}' "${OUT_DIR}"/organizations/ordererOrganizations/example.com/chaincode/tls/ca.crt)"
+  CLIENT_KEY="$(awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}' "${OUT_DIR}"/organizations/ordererOrganizations/example.com/chaincode/msp/server.key)"
+  CLIENT_CRT="$(awk 'NF {sub(/\r/, ""); printf "%s\\n",$0;}' "${OUT_DIR}"/organizations/ordererOrganizations/example.com/chaincode/msp/server.crt)"
 
-  cat > "${OUT_DIR}"/connection.json << EOF
+  cat > "${OUT_DIR}"/chaincode/connection.json << EOF
 {
   "address": "${CC_APP_HOST}:${CC_APP_PORT}",
   "dial_timeout": "10s",
@@ -116,7 +117,7 @@ if [ "${CC_TLS_ENABLED}" == "true" ]; then
 }
 EOF
 else
-  cat > "${OUT_DIR}"/connection.json << EOF
+  cat > "${OUT_DIR}"/chaincode/connection.json << EOF
 {
   "address": "${CC_APP_HOST}:${CC_APP_PORT}",
   "dial_timeout": "10s",
@@ -124,20 +125,21 @@ else
 }
 EOF
 fi
-cat > "${OUT_DIR}"/metadata.json << EOF
+cat > "${OUT_DIR}"/chaincode/metadata.json << EOF
 {
   "type": "external",
   "label": "${CC_NAME}_${CC_VERSION}"
 }
 EOF
 
-pushd "${OUT_DIR}"
+pushd "${OUT_DIR}"/chaincode
 tar cvfz code.tar.gz connection.json
 tar cvfz "${CC_NAME}".tar.gz metadata.json code.tar.gz
 popd
 
-sudo mkdir -p "${NFS_DIR}"/chaincode
-sudo cp -rf "${OUT_DIR}"/"${CC_NAME}".tar.gz "${NFS_DIR}"/chaincode
+#sudo mkdir -p "${NFS_DIR}"/chaincode
+#sudo cp -rf "${OUT_DIR}"/"${CC_NAME}".tar.gz "${NFS_DIR}"/chaincode
+out2nfs chaincode
 
 installCC 1
 installCC 2
