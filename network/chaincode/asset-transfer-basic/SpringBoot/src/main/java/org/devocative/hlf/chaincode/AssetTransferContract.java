@@ -37,16 +37,17 @@ public class AssetTransferContract implements ContractInterface {
 	}
 
 	@Override
-	public void beforeTransaction(Context ctx) {
+	public void beforeTransaction(final Context ctx) {
 		final ChaincodeStub stub = ctx.getStub();
 		final ClientIdentity clientIdentity = ctx.getClientIdentity();
 
-		log.info("--- B4: func=[{}], params={}, mspId=[{}], clientCert.subject=[{}], clientCert.issuer=[{}]",
+		log.info("--- B4: func=[{}], params={}, mspId=[{}], txId=[{}], clientCert.subject=[{}], clientCert.issuer=[{}]",
 			stub.getFunction(),
 			stub.getParameters(),
 			//stub.getMspId(), TIP: RuntimeException: CORE_PEER_LOCALMSPID is unset in chaincode process
 			//new String(stub.getCreator()), TIP: not useful, value= mspId + cert
 			clientIdentity.getMSPID(),
+			stub.getTxId(),
 			clientIdentity.getX509Certificate().getSubjectX500Principal(),
 			clientIdentity.getX509Certificate().getIssuerX500Principal()
 		);
@@ -54,6 +55,19 @@ public class AssetTransferContract implements ContractInterface {
 		if (stub.getFunction().equals("createAsset") && stub.getParameters().get(0).equals("asset13")) {
 			throw new RuntimeException("Invalid Asset");
 		}
+	}
+
+	@Override
+	public void afterTransaction(final Context ctx, final Object result) {
+		final ChaincodeStub stub = ctx.getStub();
+		final ClientIdentity clientIdentity = ctx.getClientIdentity();
+
+		log.info("=== A4: func=[{}], params={}, mspId=[{}], txId=[{}]",
+			stub.getFunction(),
+			stub.getParameters(),
+			clientIdentity.getMSPID(),
+			stub.getTxId()
+		);
 	}
 
 	@Transaction(intent = Transaction.TYPE.SUBMIT)
