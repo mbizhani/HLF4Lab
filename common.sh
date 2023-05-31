@@ -58,13 +58,30 @@ function waitForFile() {
   done
 }
 
-function out2nfs() {
-    kubectl cp -n "${NAMESPACE}" "${OUT_DIR}/$1" busybox:/hlf
+function out2pv() {
+  local localDir="$1"
+  kubectl cp -n "${NAMESPACE}" --retries=3 "${OUT_DIR}/${localDir}" busybox:/hlf
+
+  sleep 2
+  kubectl -n "${NAMESPACE}" exec busybox -- sh -c "
+    while [ ! -d /hlf/${localDir} ]; do
+      sleep 2
+    done
+
+    while [ \"\$(ls -l /hlf/${localDir} | wc -l)\" == \"1\" ]; do
+      sleep 2
+    done
+  "
 }
 
-function nfs2out() {
+function pv2out() {
   mkdir -p "${OUT_DIR}/$1"
-  kubectl cp -n "${NAMESPACE}" busybox:/hlf/"$1" "${OUT_DIR}/$1"
+  kubectl cp -n "${NAMESPACE}" --retries=3 busybox:/hlf/"$1" "${OUT_DIR}/$1"
+
+  sleep 2
+  while [ "$(ls -l "${OUT_DIR}/$1" | wc -l)" == "1" ]; do
+    sleep 2
+  done
 }
 
 ##
@@ -119,7 +136,7 @@ EOF
     createOrg ${orgId} $(caPort "${orgId}")
   "
 
-  nfs2out organizations
+  pv2out organizations
 
   # Create Connection Profile
   local PEER_PEM="${OUT_DIR}/organizations/peerOrganizations/org${orgId}.example.com/tlsca/tlsca.org${orgId}.example.com-cert.pem"
@@ -250,24 +267,24 @@ function fetchChannelConfigBlock() {
   local configJson=$4
 
   runInPeer 1 "
-    peer channel fetch config /hlf/config_block.pb \
+    mkdir -p /hlf/${destDir}
+
+    peer channel fetch config /hlf/${destDir}/${configBlockPb} \
       -o ${ORDERER_URL} \
       --tls --cafile ${ORDERER_CA} \
       -c ${CHANNEL_NAME}
     "
 
-  waitForFile "${NFS_DIR}"/config_block.pb
-  sudo mv "${NFS_DIR}"/config_block.pb "${destDir}/${configBlockPb}"
-  sudo chown "$(id -u)":"$(id -g)" "${destDir}/${configBlockPb}"
+  pv2out "${destDir}"
 
   bin/configtxlator proto_decode \
     --type common.Block \
-    --input  "${destDir}/${configBlockPb}" \
-    --output "${destDir}/${configBlockJson}"
+    --input  "${OUT_DIR}/${destDir}/${configBlockPb}" \
+    --output "${OUT_DIR}/${destDir}/${configBlockJson}"
 
   jq \
     .data.data[0].payload.data.config \
-    "${destDir}/${configBlockJson}" > "${destDir}/${configJson}"
+    "${OUT_DIR}/${destDir}/${configBlockJson}" > "${OUT_DIR}/${destDir}/${configJson}"
 }
 
 function createUpdateConfigBlock() {

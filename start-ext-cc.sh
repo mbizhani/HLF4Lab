@@ -139,7 +139,7 @@ popd
 
 #sudo mkdir -p "${NFS_DIR}"/chaincode
 #sudo cp -rf "${OUT_DIR}"/"${CC_NAME}".tar.gz "${NFS_DIR}"/chaincode
-out2nfs chaincode
+out2pv chaincode
 
 installCC 1
 installCC 2

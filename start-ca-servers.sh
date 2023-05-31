@@ -18,7 +18,7 @@ $(<network/organizations/fabric-ca-server-config-ORG.yaml)
 EOF" > "${OUT_DIR}"/fabric-ca/org${ORG_ID}/fabric-ca-server-config.yaml
 done
 
-out2nfs fabric-ca
+out2pv fabric-ca
 
 ##############
 # ORDERER  CA

@@ -9,7 +9,8 @@ ORG_ID="$1"
 source .env
 source common.sh
 
-ADD_ORG_DIR="${OUT_DIR}/add-org${ORG_ID}"
+ORG_DIR="add-org${ORG_ID}"
+ADD_ORG_DIR="${OUT_DIR}/${ORG_DIR}"
 mkdir "${ADD_ORG_DIR}"
 
 ############
@@ -19,7 +20,7 @@ eval "cat <<EOF
 $(<network/organizations/fabric-ca-server-config-ORG.yaml)
 EOF" > "${OUT_DIR}/fabric-ca/org${ORG_ID}/fabric-ca-server-config.yaml"
 
-sudo cp -rf "${OUT_DIR}"/fabric-ca "${NFS_DIR}"
+out2pv fabric-ca
 
 installCA4Org "${ORG_ID}"
 
@@ -28,7 +29,7 @@ installCA4Org "${ORG_ID}"
 
 # --- fetchChannelConfig() START
 echo "--- Gen: 1 & 2 & 3"
-fetchChannelConfigBlock "${ADD_ORG_DIR}" "01-config_block.pb" "02-config_block.json" "03-config.json"
+fetchChannelConfigBlock "${ORG_DIR}" "01-config_block.pb" "02-config_block.json" "03-config.json"
 # --- fetchChannelConfig() END
 
 echo "--- Gen: 4"
@@ -36,7 +37,7 @@ eval "cat <<EOF
 $(<network/configtx-org/configtx.yaml)
 EOF" > "${ADD_ORG_DIR}"/configtx.yaml
 
-sudo bin/configtxgen \
+bin/configtxgen \
   -configPath "${ADD_ORG_DIR}" \
   -printOrg "Org${ORG_ID}MSP" > "${ADD_ORG_DIR}"/04-org.json
 
@@ -52,11 +53,11 @@ createUpdateConfigBlock "${ADD_ORG_DIR}" "03-config.json" "05-modified_config.js
 
 sleep 1
 
-sudo cp -rf "${ADD_ORG_DIR}" "${NFS_DIR}"/
+out2pv "${ORG_DIR}"
 
 # --- signConfigtxAsPeerOrg START
 runInPeer 1 "
-  peer channel signconfigtx -f /hlf/add-org${ORG_ID}/10-config_update_in_envelope.pb
+  peer channel signconfigtx -f /hlf/${ORG_DIR}/10-config_update_in_envelope.pb
 "
 # --- signConfigtxAsPeerOrg END
 
@@ -66,7 +67,7 @@ runInPeer 2 "
     -o ${ORDERER_URL} \
     --tls --cafile ${ORDERER_CA} \
     -c ${CHANNEL_NAME} \
-    -f /hlf/add-org${ORG_ID}/10-config_update_in_envelope.pb
+    -f /hlf/${ORG_DIR}/10-config_update_in_envelope.pb
   "
 
 sleep 2
@@ -94,7 +95,7 @@ runInPeer "${ORG_ID}" "
 
 # --- createAnchorPeerUpdate() START
 echo "--- Gen: 11 & 12 & 13"
-fetchChannelConfigBlock "${ADD_ORG_DIR}" "11-config_block.pb" "12-config_block.json" "13-config.json"
+fetchChannelConfigBlock "${ORG_DIR}" "11-config_block.pb" "12-config_block.json" "13-config.json"
 
 echo "--- Gen: 14"
 CORE_PEER_LOCALMSPID="Org${ORG_ID}MSP"
@@ -107,14 +108,14 @@ createUpdateConfigBlock "${ADD_ORG_DIR}" "13-config.json" "14-modified_config.js
 # --- createAnchorPeerUpdate() END
 
 sleep 2
-sudo cp -rf "${ADD_ORG_DIR}" "${NFS_DIR}"/
+out2pv "${ORG_DIR}"
 
 runInPeer "${ORG_ID}" "
   peer channel update \
     -o ${ORDERER_URL} \
     --tls --cafile ${ORDERER_CA} \
     -c ${CHANNEL_NAME} \
-    -f /hlf/add-org${ORG_ID}/19-config_update_in_envelope.pb
+    -f /hlf/${ORG_DIR}/19-config_update_in_envelope.pb
   "
 sleep 3
 

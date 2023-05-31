@@ -35,7 +35,7 @@ for ORG_ID in 1 2; do
     echo "CreateAnchorPeer(Org${ORG_ID}MSP): $?"
 done
 
-out2nfs init
+out2pv init
 
 ## START ORDERER
 helm install orderer helms/hlf-orderer \

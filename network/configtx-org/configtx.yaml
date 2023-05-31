@@ -21,7 +21,7 @@ Organizations:
         # ID to load the MSP definition as
         ID: Org${ORG_ID}MSP
 
-        MSPDir: ${NFS_DIR}/organizations/peerOrganizations/org${ORG_ID}.example.com/msp
+        MSPDir: ../organizations/peerOrganizations/org${ORG_ID}.example.com/msp
 
         Policies:
             Readers:
