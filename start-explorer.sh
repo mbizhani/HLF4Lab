@@ -12,9 +12,12 @@ psql -h "${EXPLORER_PGS_HOST}" -U "${EXPLORER_PGS_USER}" -d "${EXPLORER_PGS_DB}"
   -v dbname='db_hl_explorer' -v user='u_hl_explorer' -v passwd="'u_hl_explorer'"
 
 helm install explorer helms/hl-explorer \
-  -f values/explorer.yaml \
   --set hlExplorer.nfs.path="${NFS_DIR}" \
   --set hlExplorer.nfs.server="${NFS_SERVER}" \
   --set hlExplorer.db.host="${EXPLORER_PGS_HOST}" \
-  --set hlExplorer.peer_org1.port="$(peerPort 1)"
+  --set hlExplorer.peer_org1.port="$(peerPort 1)" \
+  -f - <<EOF
+image:
+  repository: ${REG_URL}/hyperledger/explorer
+EOF
 
