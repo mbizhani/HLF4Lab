@@ -12,7 +12,6 @@ data:
   CORE_PEER_TLS_ROOTCERT_FILE: "{{ .Values.hlfPeer.config.mountBaseDir }}/{{ .Values.hlfPeer.config.cmpDir }}/tls/ca.crt"
   # Peer Specific Variables
   CORE_PEER_ID: {{ .Values.hlfPeer.config.fqdn | quote }}
-  CORE_PEER_ADDRESSAUTODETECT: "true"
   CORE_PEER_ADDRESS: "{{ .Values.hlfPeer.config.fqdn }}:{{ .Values.service.port }}"
   CORE_PEER_LISTENADDRESS: "0.0.0.0:{{ .Values.service.port }}"
   CORE_PEER_CHAINCODEADDRESS: "{{ .Values.hlfPeer.config.fqdn }}:{{ .Values.hlfPeer.chaincode.port }}"

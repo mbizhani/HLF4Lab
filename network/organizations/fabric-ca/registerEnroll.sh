@@ -275,7 +275,7 @@ createOrderer() {
     -u https://chaincode:chaincodePw@${CA_SERVER_URL} \
     --tls.certfiles "${CA_SERVER_TLS_FILE}" \
     -M "${FABRIC_CA_CLIENT_HOME}"/chaincode/msp \
-    --csr.hosts basic-cc.org1.example.com
+    --csr.hosts basic-cc.example.com
   { set +x; } 2>/dev/null
 
   infoln "Generating Chaincode-TLS Certificates"
@@ -286,7 +286,7 @@ createOrderer() {
     --tls.certfiles "${CA_SERVER_TLS_FILE}" \
     --enrollment.profile tls \
     -M "${FABRIC_CA_CLIENT_HOME}"/chaincode/tls \
-    --csr.hosts basic-cc.org1.example.com
+    --csr.hosts basic-cc.example.com
   { set +x; } 2>/dev/null
 
   cp "${FABRIC_CA_CLIENT_HOME}"/chaincode/msp/cacerts/* "${FABRIC_CA_CLIENT_HOME}"/chaincode/msp/ca.crt

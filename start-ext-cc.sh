@@ -3,6 +3,8 @@
 source .env
 source common.sh
 
+CC_APP_HOST="basic-cc.example.com"
+
 ##############################
 
 function commitCC() {

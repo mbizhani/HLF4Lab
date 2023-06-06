@@ -37,9 +37,9 @@ A lab environment to deploy **Hyperledger Fabric** to **Kubernetes** with **Exte
     rewrite name ca.org2.example.com ca-org2-hlf-ca.hlf4lab.svc.cluster.local
 
     rewrite name orderer.example.com       orderer-hlf-orderer.hlf4lab.svc.cluster.local
+    rewrite name basic-cc.example.com      basic-hlf-cc.hlf4lab.svc.cluster.local
     rewrite name peer0.org1.example.com    peer0-org1-hlf-peer.hlf4lab.svc.cluster.local
     rewrite name peer0.org2.example.com    peer0-org2-hlf-peer.hlf4lab.svc.cluster.local
-    rewrite name basic-cc.org1.example.com basic-hlf-cc.hlf4lab.svc.cluster.local
     ```
    - Note: the `.hlf4lab.` in the records is the target namespace 
    - Restart its pod
